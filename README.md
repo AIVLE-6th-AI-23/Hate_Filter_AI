@@ -1,4 +1,4 @@
-# 2025 KT AIVLE School 6기 8반 23조 팀 프로젝트 수행을 위한 공용 레포지터리입니다.
+# 2025 KT AIVLE School 6기 8반 23조 팀 프로젝트 레포지터리
 
 ## 개요
  - 제품 명 : Hate_Filter_AI
