@@ -1,9 +1,9 @@
-package com.github.aivle6th.ai23.springboot-backend.service;
+package com.github.aivle6th.ai23.springboot_backend.service;
 
-import com.github.aivle6th.ai23.backend.domain.user.dto.UserRequestDto;
-import com.github.aivle6th.ai23.backend.domain.user.dto.UserResponseDto;
-import com.github.aivle6th.ai23.backend.domain.user.entity.User;
-import com.github.aivle6th.ai23.backend.domain.user.repository.UserRepository;
+import com.github.aivle6th.ai23.springboot_backend.dto.UserRequestDto;
+import com.github.aivle6th.ai23.springboot_backend.dto.UserResponseDto;
+import com.github.aivle6th.ai23.springboot_backend.entity.User;
+import com.github.aivle6th.ai23.springboot_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

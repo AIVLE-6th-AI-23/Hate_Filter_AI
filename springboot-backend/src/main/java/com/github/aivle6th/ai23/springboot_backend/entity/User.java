@@ -1,11 +1,10 @@
-package com.github.aivle6th.ai23.springboot-backend.entity;
+package com.github.aivle6th.ai23.springboot_backend.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
 @Entity

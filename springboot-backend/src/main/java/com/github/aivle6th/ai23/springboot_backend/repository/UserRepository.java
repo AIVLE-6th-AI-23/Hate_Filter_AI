@@ -1,8 +1,7 @@
-package com.github.aivle6th.ai23.springboot-backend.repository;
+package com.github.aivle6th.ai23.springboot_backend.repository;
 
-import com.github.aivle6th.ai23.backend.domain.user.entity.User;
+import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {

@@ -1,59 +1,63 @@
 package com.github.aivle6th.ai23.springboot_backend.service;
 
-import com.github.aivle6th.ai23.backend.domain.home.dto.HomeRequestDto;
-import com.github.aivle6th.ai23.backend.domain.home.dto.HomeResponseDto;
-import com.github.aivle6th.ai23.backend.domain.home.entity.Home;
-import com.github.aivle6th.ai23.backend.domain.home.repository.HomeRepository;
+import com.github.aivle6th.ai23.springboot_backend.dto.BoardRequestDto;
+import com.github.aivle6th.ai23.springboot_backend.dto.BoardResponseDto;
+import com.github.aivle6th.ai23.springboot_backend.entity.Board;
+import com.github.aivle6th.ai23.springboot_backend.entity.User;
+import com.github.aivle6th.ai23.springboot_backend.repository.BoardRepository;
+import com.github.aivle6th.ai23.springboot_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class HomeService {
+public class BoardService {
 
-    private final HomeRepository homeRepository;
+    private final BoardRepository boardRepository;
+    private final UserRepository userRepository;
 
     @Transactional
-    public Long create(HomeRequestDto request) {
-        return homeRepository.save(request.toEntity()).getId();
+    public Long create(Long userId, BoardRequestDto request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        return boardRepository.save(request.toEntity(user)).getId();
     }
 
     @Transactional(readOnly = true)
-    public HomeResponseDto findById(Long id) {
-        Home home = homeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Not found: " + id));
-        return new HomeResponseDto(home);
+    public BoardResponseDto findById(Long id) {
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Board not found: " + id));
+        return new BoardResponseDto(board);
     }
 
     @Transactional(readOnly = true)
-    public List<HomeResponseDto> findByStatus(String status) {
-        return homeRepository.findByStatus(status).stream()
-                .map(HomeResponseDto::new)
+    public List<BoardResponseDto> findByUserId(Long userId) {
+        return boardRepository.findByUserId(userId).stream()
+                .map(BoardResponseDto::new)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
-    public List<HomeResponseDto> findByContentType(String contentType) {
-        return homeRepository.findByContentType(contentType).stream()
-                .map(HomeResponseDto::new)
+    public List<BoardResponseDto> findByStatus(String status) {
+        return boardRepository.findByStatus(status).stream()
+                .map(BoardResponseDto::new)
                 .collect(Collectors.toList());
     }
 
     @Transactional
-    public void update(Long id, HomeRequestDto request) {
-        Home home = homeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Not found: " + id));
-        home.update(request.getTitle(), request.getContent(), request.getStatus());
+    public void update(Long id, BoardRequestDto request) {
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Board not found: " + id));
+        board.update(request.getTitle(), request.getContent(), request.getStatus());
     }
 
     @Transactional
     public void delete(Long id) {
-        Home home = homeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Not found: " + id));
-        homeRepository.delete(home);
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Board not found: " + id));
+        boardRepository.delete(board);
     }
 }

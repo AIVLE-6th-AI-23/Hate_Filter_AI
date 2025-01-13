@@ -1,8 +1,7 @@
 package com.github.aivle6th.ai23.springboot_backend.dto;
 
-import com.github.aivle6th.ai23.backend.domain.board.entity.Board;
+import com.github.aivle6th.ai23.springboot_backend.entity.Board;
 import lombok.Getter;
-
 import java.time.LocalDateTime;
 
 @Getter

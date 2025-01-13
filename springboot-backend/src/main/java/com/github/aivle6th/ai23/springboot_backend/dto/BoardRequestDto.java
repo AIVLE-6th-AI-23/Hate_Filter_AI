@@ -1,13 +1,14 @@
 package com.github.aivle6th.ai23.springboot_backend.dto;
 
-import com.github.aivle6th.ai23.backend.domain.home.entity.Home;
+import com.github.aivle6th.ai23.springboot_backend.entity.Board;
+import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor
-public class HomeRequestDto {
+public class BoardRequestDto {
     private String title;
     private String content;
     private String contentType;
@@ -15,7 +16,8 @@ public class HomeRequestDto {
     private String status;
 
     @Builder
-    public HomeRequestDto(String title, String content, String contentType, String filePath, String status) {
+    public BoardRequestDto(String title, String content, String contentType,
+                           String filePath, String status) {
         this.title = title;
         this.content = content;
         this.contentType = contentType;
@@ -23,13 +25,14 @@ public class HomeRequestDto {
         this.status = status;
     }
 
-    public Home toEntity() {
-        return Home.builder()
+    public Board toEntity(User user) {
+        return Board.builder()
                 .title(title)
                 .content(content)
                 .contentType(contentType)
                 .filePath(filePath)
                 .status(status)
+                .user(user)
                 .build();
     }
 }

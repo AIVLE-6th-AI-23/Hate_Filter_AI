@@ -1,6 +1,6 @@
-package com.github.aivle6th.ai23.springboot-backend.dto;
+package com.github.aivle6th.ai23.springboot_backend.dto;
 
-import com.github.aivle6th.ai23.backend.domain.user.entity.User;
+import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

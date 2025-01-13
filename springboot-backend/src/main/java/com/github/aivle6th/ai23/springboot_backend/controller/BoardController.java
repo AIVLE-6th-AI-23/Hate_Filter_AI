@@ -1,12 +1,11 @@
-package com.github.aivle6th.ai23.springboot-backend.controller;
+package com.github.aivle6th.ai23.springboot_backend.controller;
 
-import com.github.aivle6th.ai23.backend.domain.board.dto.BoardRequestDto;
-import com.github.aivle6th.ai23.backend.domain.board.dto.BoardResponseDto;
-import com.github.aivle6th.ai23.backend.domain.board.service.BoardService;
+import com.github.aivle6th.ai23.springboot_backend.dto.BoardRequestDto;
+import com.github.aivle6th.ai23.springboot_backend.dto.BoardResponseDto;
+import com.github.aivle6th.ai23.springboot_backend.service.BoardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -17,8 +16,7 @@ public class BoardController {
     private final BoardService boardService;
 
     @PostMapping
-    public ResponseEntity<Long> create(@RequestParam Long userId,
-                                       @RequestBody BoardRequestDto request) {
+    public ResponseEntity<Long> create(@RequestParam Long userId, @RequestBody BoardRequestDto request) {
         return ResponseEntity.ok(boardService.create(userId, request));
     }
 
@@ -38,8 +36,7 @@ public class BoardController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable Long id,
-                                       @RequestBody BoardRequestDto request) {
+    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody BoardRequestDto request) {
         boardService.update(id, request);
         return ResponseEntity.ok().build();
     }
