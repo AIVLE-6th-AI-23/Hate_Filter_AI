@@ -25,5 +25,5 @@ public class HateCategory {
     private Long severityLevel;
 
     @OneToMany(mappedBy = "hateCategory")
-    private List<AnalysisCategoryResult> analysisResults = new ArrayList<>();
+    private List<AnalysisCategoryResult> analysisCategoryResults = new ArrayList<>();
 }

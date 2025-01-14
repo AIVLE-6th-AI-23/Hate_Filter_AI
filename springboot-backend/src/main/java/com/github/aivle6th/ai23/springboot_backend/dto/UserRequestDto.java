@@ -18,12 +18,4 @@ public class UserRequestDto {
         this.password = password;
         this.username = username;
     }
-
-    public User toEntity() {
-        return User.builder()
-                .email(email)
-                .password(password)
-                .username(username)
-                .build();
-    }
 }

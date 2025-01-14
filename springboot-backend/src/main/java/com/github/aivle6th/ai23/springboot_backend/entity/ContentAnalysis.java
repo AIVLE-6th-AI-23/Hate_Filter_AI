@@ -36,5 +36,5 @@ public class ContentAnalysis {
     private Post post;
 
     @OneToMany(mappedBy = "contentAnalysis")
-    private List<AnalysisCategoryResult> categoryResults = new ArrayList<>();
+    private List<AnalysisCategoryResult> analysisCategoryResults = new ArrayList<>();
 }

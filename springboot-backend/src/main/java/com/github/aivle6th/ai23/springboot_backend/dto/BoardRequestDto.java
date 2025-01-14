@@ -24,15 +24,4 @@ public class BoardRequestDto {
         this.filePath = filePath;
         this.status = status;
     }
-
-    public Board toEntity(User user) {
-        return Board.builder()
-                .title(title)
-                .content(content)
-                .contentType(contentType)
-                .filePath(filePath)
-                .status(status)
-                .user(user)
-                .build();
-    }
 }
