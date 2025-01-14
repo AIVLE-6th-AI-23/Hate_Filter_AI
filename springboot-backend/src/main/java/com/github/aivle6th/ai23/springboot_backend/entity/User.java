@@ -1,45 +1,54 @@
 package com.github.aivle6th.ai23.springboot_backend.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "USER")
 @Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "user_id", nullable = false)
+    private int userId;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+    @Column(name = "employee_id", nullable = false)
+    private String employeeId;
 
-    @Column(nullable = false)
+    @Column(name = "password", nullable = false)
     private String password;
 
-    @Column(nullable = false)
-    private String username;
+    @Column(name = "user_name", nullable = false)
+    private String userName;
 
-    @Column(nullable = false)
+    @Column(name = "email", nullable = false, unique = true)
+    private String email;
+
+    @Column(name = "dept_id")
+    private int deptId;
+
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive;
+
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    private LocalDateTime modifiedAt;
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
 
     @Builder
-    public User(String email, String password, String username) {
+    public User(int userId, String employeeId, String userName, String email, String password, int deptId, Boolean isActive) {
+        this.userId = userId;
+        this.employeeId = employeeId;
+        this.password = password;
+        this.userName = userName;
         this.email = email;
-        this.password = password;
-        this.username = username;
+        this.deptId = deptId;
+        this.isActive = isActive;
         this.createdAt = LocalDateTime.now();
-    }
-
-    public void update(String password, String username) {
-        this.password = password;
-        this.username = username;
-        this.modifiedAt = LocalDateTime.now();
+        this.lastLogin = LocalDateTime.now();
     }
 }

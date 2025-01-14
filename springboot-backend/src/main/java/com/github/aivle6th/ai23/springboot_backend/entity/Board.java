@@ -1,66 +1,47 @@
 package com.github.aivle6th.ai23.springboot_backend.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "BOARD")
+@Setter
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Board {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private int boardId;
 
-    @Column(nullable = false)
-    private String title;
+    @Column(name = "board_name", nullable = false)
+    private String boardName;
 
-    @Column(nullable = false)
-    private String content;
+    @Column(name = "description", nullable = false)
+    private String description;
 
-    @Column(nullable = false)
-    private String contentType;
+    @Column(name = "is_public", nullable = false)
+    private boolean isPublic;
 
-    private String filePath;
-
-    @Column(nullable = false)
-    private String status;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
-
-    private String analysisResult;
-
-    @Column(nullable = false)
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
-    private LocalDateTime modifiedAt;
+    @Column(name = "end_date")
+    private String endDate;
 
     @Builder
-    public Board(String title, String content, String contentType, String filePath,
-                 String status, User user) {
-        this.title = title;
-        this.content = content;
-        this.contentType = contentType;
-        this.filePath = filePath;
-        this.status = status;
-        this.user = user;
-        this.createdAt = LocalDateTime.now();
+    public Board(String boardName, String description, boolean isPublic, String createdAt, String endDate) {
+        this.boardName = boardName;
+        this.description = description;
+        this.isPublic = isPublic;
+        this.createdAt= LocalDateTime.now();
+        this.endDate = endDate;
     }
 
-    public void update(String title, String content, String status) {
-        this.title = title;
-        this.content = content;
-        this.status = status;
-        this.modifiedAt = LocalDateTime.now();
-    }
-
-    public void updateAnalysisResult(String result) {
-        this.analysisResult = result;
-        this.modifiedAt = LocalDateTime.now();
+    public void update(String boardName, String description, boolean isPublic) {
+        this.boardName = boardName;
+        this.description = description;
+        this.isPublic = isPublic;
     }
 }
