@@ -4,44 +4,36 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name = "BOARD")
-@Setter
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@NoArgsConstructor
+@Table(name = "BOARD")
 public class Board {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int boardId;
+    @Column(name = "board_id")
+    private Long boardId;
 
-    @Column(name = "board_name", nullable = false)
-    private String boardName;
+    @Column(name = "board_title")
+    private String boardTitle;
 
-    @Column(name = "description", nullable = false)
+    @Column(name = "description")
     private String description;
 
-    @Column(name = "is_public", nullable = false)
-    private boolean isPublic;
+    @Column(name = "is_public")
+    private Boolean isPublic;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "end_date")
-    private String endDate;
+    private LocalDateTime endDate;
 
-    @Builder
-    public Board(String boardName, String description, boolean isPublic, String createdAt, String endDate) {
-        this.boardName = boardName;
-        this.description = description;
-        this.isPublic = isPublic;
-        this.createdAt= LocalDateTime.now();
-        this.endDate = endDate;
-    }
+    @OneToMany(mappedBy = "board")
+    private List<BoardDepartment> boardDepartments = new ArrayList<>();
 
-    public void update(String boardName, String description, boolean isPublic) {
-        this.boardName = boardName;
-        this.description = description;
-        this.isPublic = isPublic;
-    }
+    @OneToMany(mappedBy = "board")
+    private List<Post> posts = new ArrayList<>();
 }
