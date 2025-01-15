@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Table(name = "MODEL_VERSION")
 public class ModelVersion {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "model_id")
     private Long modelId;
 

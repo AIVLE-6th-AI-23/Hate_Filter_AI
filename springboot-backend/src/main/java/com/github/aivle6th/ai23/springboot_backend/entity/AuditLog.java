@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Table(name = "AUDIT_LOG")
 public class AuditLog {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "log_id")
     private Long logId;
 

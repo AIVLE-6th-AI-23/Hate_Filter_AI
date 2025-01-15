@@ -9,6 +9,7 @@ import lombok.*;
 @Table(name = "ANALYSIS_CATEGORY_RESULT")
 public class AnalysisCategoryResult {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "result_id")
     private Long resultId;
 
