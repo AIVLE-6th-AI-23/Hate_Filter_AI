@@ -9,6 +9,7 @@ import java.util.List;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor
 @Table(name = "USER")
 public class User {
@@ -29,9 +30,6 @@ public class User {
     @Column(name = "pwd")
     private String pwd;
 
-    @Column(name = "dept_id")
-    private Long deptId;
-
     @Column(name = "is_active")
     private Boolean isActive;
 
@@ -45,7 +43,7 @@ public class User {
     private List<AuditLog> auditLogs = new ArrayList<>();
 
     @ManyToOne
-    @JoinColumn(name = "dept_id", insertable = false, updatable = false)
+    @JoinColumn(name = "dept_id")
     private Department department;
 
     public void updateLastLogin(LocalDateTime lastLogin) {
@@ -55,17 +53,5 @@ public class User {
     // 비밀번호 암호화 메소드
     public void setPassword(String password) {
         this.pwd = password;
-    }
-
-    @Builder
-    public User(String employeeId, String userName, String email, String pwd,
-                Long deptId, Boolean isActive, LocalDateTime createdAt) {
-        this.employeeId = employeeId;
-        this.userName = userName;
-        this.email = email;
-        this.pwd = pwd;
-        this.deptId = deptId;
-        this.isActive = isActive;
-        this.createdAt = createdAt;
     }
 }

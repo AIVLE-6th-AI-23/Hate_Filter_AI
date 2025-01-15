@@ -15,9 +15,6 @@ public class Post {
     @Column(name = "post_id")
     private Long postId;
 
-    @Column(name = "board_id")
-    private Long boardId;
-
     @Column(name = "post_title")
     private String postTitle;
 
@@ -30,11 +27,11 @@ public class Post {
     @Column(name = "modified_at")
     private LocalDateTime modifiedAt;
 
-    @Column(name = "dept_id")
+    @Column(name = "view_count")
     private Long viewCount;
 
     @ManyToOne
-    @JoinColumn(name = "board_id", insertable = false, updatable = false)
+    @JoinColumn(name = "board_id")
     private Board board;
 
     @OneToOne(mappedBy = "post")

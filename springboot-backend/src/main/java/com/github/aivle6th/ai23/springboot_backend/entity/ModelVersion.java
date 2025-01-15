@@ -7,7 +7,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "MODEL_VERSION")
 public class ModelVersion {
     @Id

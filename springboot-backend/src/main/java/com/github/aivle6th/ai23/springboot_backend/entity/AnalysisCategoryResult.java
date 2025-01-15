@@ -13,12 +13,6 @@ public class AnalysisCategoryResult {
     @Column(name = "result_id")
     private Long resultId;
 
-    @Column(name = "analysis_id")
-    private Long analysisId;
-
-    @Column(name = "category_id")
-    private Long categoryId;
-
     @Column(name = "category_score")
     private Float categoryScore;
 
@@ -26,10 +20,10 @@ public class AnalysisCategoryResult {
     private String detectionMetadata;
 
     @ManyToOne
-    @JoinColumn(name = "analysis_id", insertable = false, updatable = false)
+    @JoinColumn(name = "analysis_id")
     private ContentAnalysis contentAnalysis;
 
     @ManyToOne
-    @JoinColumn(name = "category_id", insertable = false, updatable = false)
+    @JoinColumn(name = "category_id")
     private HateCategory hateCategory;
 }

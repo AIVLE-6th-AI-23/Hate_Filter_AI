@@ -5,7 +5,9 @@ import lombok.*;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "BOARD_DEPARTMENT")
 public class BoardDepartment {
     @Id
