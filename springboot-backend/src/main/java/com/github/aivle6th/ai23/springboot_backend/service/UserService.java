@@ -3,53 +3,49 @@ package com.github.aivle6th.ai23.springboot_backend.service;
 import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import com.github.aivle6th.ai23.springboot_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserDetailsService {
+public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
 
-    public void signup(User request) {
-        if (userRepository.existsByEmployeeId(request.getEmployeeId())) {
-            throw new RuntimeException("Employee ID already exists");
-        }
-
-        User user = new User();
-        user.setEmployeeId(request.getEmployeeId());
-        user.setUserName(request.getUserName());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPwd()));
+    @Transactional
+    public User signup(User user) {
+        user.setPassword(passwordEncoder.encode(user.getPwd()));
         user.setIsActive(true);
         user.setCreatedAt(LocalDateTime.now());
-
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 
-    @Override
-    public UserDetails loadUserByUsername(String employeeId) throws UsernameNotFoundException {
-        User user = userRepository.findByEmployeeId(employeeId)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    public String login(String employeeId, String password) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(employeeId, password)
+            );
 
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getEmployeeId())
-                .password(user.getPwd())
-                .roles("USER")
-                .build();
-    }
+            if (authentication.isAuthenticated()) {
+                User user = userRepository.findByEmployeeId(employeeId)
+                        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                user.updateLastLogin(LocalDateTime.now());
+                return "Login successful";
+            }
 
-    public void updateLastLogin(String employeeId) {
-        User user = userRepository.findByEmployeeId(employeeId)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        user.updateLastLogin(LocalDateTime.now());
-        userRepository.save(user);
+            return "Authentication failed";
+        } catch (AuthenticationException e) {
+            return "Invalid credentials";
+        }
     }
 }
