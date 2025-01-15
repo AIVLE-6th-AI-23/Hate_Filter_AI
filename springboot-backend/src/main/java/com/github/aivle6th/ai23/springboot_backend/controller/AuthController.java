@@ -22,8 +22,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<String>> login(@RequestBody LoginRequest loginRequest) {
-        // 로그인 처리 후 토큰 반환
-        String token = userService.login(loginRequest.getEmployeeId(), loginRequest.getPassword());
-        return ResponseEntity.ok(new ApiResponse<>(true, "로그인 성공", token));
+        String result = userService.login(loginRequest.getEmployeeId(), loginRequest.getPassword());
+        return ResponseEntity.ok(new ApiResponse<>(true, "로그인 성공", result));
     }
 }
