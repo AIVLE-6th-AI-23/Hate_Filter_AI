@@ -1,49 +1,58 @@
 package com.github.aivle6th.ai23.springboot_backend.controller;
 
-import com.github.aivle6th.ai23.springboot_backend.dto.BoardRequestDto;
-import com.github.aivle6th.ai23.springboot_backend.dto.BoardResponseDto;
+import com.github.aivle6th.ai23.springboot_backend.dto.BoardDTO;
+import com.github.aivle6th.ai23.springboot_backend.entity.Board;
 import com.github.aivle6th.ai23.springboot_backend.service.BoardService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
+@RequestMapping("/boards")
 @RequiredArgsConstructor
-@RequestMapping("/api/boards")
 public class BoardController {
 
     private final BoardService boardService;
 
-    @PostMapping
-    public ResponseEntity<Long> create(@RequestParam Long userId, @RequestBody BoardRequestDto request) {
-        return ResponseEntity.ok(boardService.create(userId, request));
+    @GetMapping("/my")
+    public ResponseEntity<List<BoardDTO>> getMyBoards(@AuthenticationPrincipal UserDetails userDetails) {
+        Long userId = Long.parseLong(userDetails.getUsername());
+        List<Board> boards = boardService.getUserBoards(userId);
+        List<BoardDTO> boardDTOs = boards.stream()
+                .map(BoardDTO::from)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(boardDTOs);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<BoardResponseDto> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(boardService.findById(id));
+    @GetMapping("/my/page")
+    public ResponseEntity<Page<BoardDTO>> getMyBoardsWithPaging(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        Long userId = Long.parseLong(userDetails.getUsername());
+        Page<Board> boardPage = boardService.getUserBoardsWithPaging(userId, pageable);
+        Page<BoardDTO> boardDTOPage = boardPage.map(BoardDTO::from);
+
+        return ResponseEntity.ok(boardDTOPage);
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<BoardResponseDto>> findByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(boardService.findByUserId(userId));
-    }
+    @GetMapping("/{boardId}")
+    public ResponseEntity<BoardDTO> getBoard(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long boardId) {
 
-    @GetMapping("/status/{status}")
-    public ResponseEntity<List<BoardResponseDto>> findByStatus(@PathVariable String status) {
-        return ResponseEntity.ok(boardService.findByStatus(status));
-    }
+        Long userId = Long.parseLong(userDetails.getUsername());
+        Board board = boardService.getUserBoard(userId, boardId);
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody BoardRequestDto request) {
-        boardService.update(id, request);
-        return ResponseEntity.ok().build();
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        boardService.delete(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(BoardDTO.from(board));
     }
 }
