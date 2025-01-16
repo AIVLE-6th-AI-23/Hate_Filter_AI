@@ -16,11 +16,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor //-> builder를 사용하기 위해서 필요함 모든 값에 대한 생성자가 필요하기 때문에
 public class Post {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "post_id")
     private Long postId;
-
-    @Column(name = "board_id")
-    private Long boardId;
 
     @Column(name = "post_title")
     private String postTitle;
@@ -34,11 +32,11 @@ public class Post {
     @Column(name = "modified_at")
     private LocalDateTime modifiedAt;
 
-    @Column(name = "dept_id")
+    @Column(name = "view_count")
     private Long viewCount;
 
     @ManyToOne
-    @JoinColumn(name = "board_id", insertable = false, updatable = false)
+    @JoinColumn(name = "board_id")
     private Board board;
 
     @OneToOne(mappedBy = "post")

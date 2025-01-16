@@ -8,7 +8,9 @@ import java.util.List;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "HATE_CATEGORY")
 public class HateCategory {
     @Id
@@ -25,5 +27,5 @@ public class HateCategory {
     private Long severityLevel;
 
     @OneToMany(mappedBy = "hateCategory")
-    private List<AnalysisCategoryResult> analysisResults = new ArrayList<>();
+    private List<AnalysisCategoryResult> analysisCategoryResults = new ArrayList<>();
 }

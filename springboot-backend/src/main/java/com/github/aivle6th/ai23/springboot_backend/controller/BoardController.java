@@ -1,49 +1,27 @@
 package com.github.aivle6th.ai23.springboot_backend.controller;
 
-import com.github.aivle6th.ai23.springboot_backend.dto.BoardRequestDto;
-import com.github.aivle6th.ai23.springboot_backend.dto.BoardResponseDto;
+import com.github.aivle6th.ai23.springboot_backend.dto.BoardDTO;
+import com.github.aivle6th.ai23.springboot_backend.entity.Board;
+import com.github.aivle6th.ai23.springboot_backend.entity.CustomUserDetails;
 import com.github.aivle6th.ai23.springboot_backend.service.BoardService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/boards")
+@RequiredArgsConstructor
 public class BoardController {
 
     private final BoardService boardService;
 
-    @PostMapping
-    public ResponseEntity<Long> create(@RequestParam Long userId, @RequestBody BoardRequestDto request) {
-        return ResponseEntity.ok(boardService.create(userId, request));
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<BoardResponseDto> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(boardService.findById(id));
-    }
-
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<BoardResponseDto>> findByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(boardService.findByUserId(userId));
-    }
-
-    @GetMapping("/status/{status}")
-    public ResponseEntity<List<BoardResponseDto>> findByStatus(@PathVariable String status) {
-        return ResponseEntity.ok(boardService.findByStatus(status));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Void> update(@PathVariable Long id, @RequestBody BoardRequestDto request) {
-        boardService.update(id, request);
-        return ResponseEntity.ok().build();
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        boardService.delete(id);
-        return ResponseEntity.ok().build();
+    @GetMapping("/boards")
+    public String listBoards(Model model, @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String deptId = userDetails.getUser().getDepartment().getDeptId();
+        List<Board> boards = boardService.getBoardsByDepartment(deptId);
+        model.addAttribute("boards", boards);
+        return "boards";
     }
 }

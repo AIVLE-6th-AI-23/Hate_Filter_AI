@@ -13,6 +13,7 @@ import java.util.List;
 @Table(name = "BOARD")
 public class Board {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "board_id")
     private Long boardId;
 

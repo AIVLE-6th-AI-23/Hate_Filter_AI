@@ -11,14 +11,9 @@ import java.time.LocalDateTime;
 @Table(name = "AUDIT_LOG")
 public class AuditLog {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "log_id")
     private Long logId;
-
-    @Column(name = "user_id")
-    private Long userId;
-
-    @Column(name = "dept_id")
-    private Long deptId;
 
     @Column(name = "action_type")
     private String actionType;
@@ -33,10 +28,10 @@ public class AuditLog {
     private LocalDateTime actionTime;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "dept_id", insertable = false, updatable = false)
+    @JoinColumn(name = "dept_id")
     private Department department;
 }

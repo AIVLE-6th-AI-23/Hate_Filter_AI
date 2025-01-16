@@ -13,11 +13,9 @@ import java.util.List;
 @Table(name = "CONTENT_ANALYSIS")
 public class ContentAnalysis {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "analysis_id")
     private Long analysisId;
-
-    @Column(name = "post_id")
-    private Long postId;
 
     @Column(name = "content_type")
     private String contentType;
@@ -32,9 +30,9 @@ public class ContentAnalysis {
     private String status;
 
     @OneToOne
-    @JoinColumn(name = "post_id", insertable = false, updatable = false)
+    @JoinColumn(name = "post_id")
     private Post post;
 
     @OneToMany(mappedBy = "contentAnalysis")
-    private List<AnalysisCategoryResult> categoryResults = new ArrayList<>();
+    private List<AnalysisCategoryResult> analysisCategoryResults = new ArrayList<>();
 }

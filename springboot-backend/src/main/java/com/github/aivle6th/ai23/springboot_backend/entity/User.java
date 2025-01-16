@@ -9,10 +9,12 @@ import java.util.List;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor
 @Table(name = "USER")
 public class User {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     private Long userId;
 
@@ -28,9 +30,6 @@ public class User {
     @Column(name = "pwd")
     private String pwd;
 
-    @Column(name = "dept_id")
-    private Long deptId;
-
     @Column(name = "is_active")
     private Boolean isActive;
 
@@ -44,6 +43,15 @@ public class User {
     private List<AuditLog> auditLogs = new ArrayList<>();
 
     @ManyToOne
-    @JoinColumn(name = "dept_id", insertable = false, updatable = false)
+    @JoinColumn(name = "dept_id")
     private Department department;
+
+    public void updateLastLogin(LocalDateTime lastLogin) {
+        this.lastLogin = lastLogin;
+    }
+
+    // 비밀번호 암호화 메소드
+    public void setPassword(String password) {
+        this.pwd = password;
+    }
 }

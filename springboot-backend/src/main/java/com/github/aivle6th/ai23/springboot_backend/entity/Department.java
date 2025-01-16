@@ -8,12 +8,14 @@ import java.util.List;
 
 @Entity
 @Getter
+@Setter
 @NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "DEPARTMENT")
 public class Department {
     @Id
     @Column(name = "dept_id")
-    private Long deptId;
+    private String deptId;
 
     @Column(name = "dept_name")
     private String deptName;
