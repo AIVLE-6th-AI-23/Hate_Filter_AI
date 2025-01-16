@@ -59,7 +59,7 @@ public class PostController {
 
 
     // POST 조회수 UPDATE
-    @PatchMapping("/")
+    @PatchMapping("/{postId}")
     public ResponseEntity<Void>increaseViewCount(@PathVariable Long postId){
         postService.incrementViewCount(postId);
         return ResponseEntity.ok().build();
