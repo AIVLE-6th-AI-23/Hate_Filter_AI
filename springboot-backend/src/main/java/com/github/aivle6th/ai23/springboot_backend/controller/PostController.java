@@ -39,9 +39,10 @@ public class PostController {
      */
     @PostMapping("/")
     public ResponseEntity<Long> createPost(@RequestBody PostRequestDto postRequestDto,
-                                       @PathVariable Long boardId){
+                                           @PathVariable Long boardId){
         postRequestDto = postRequestDto.toBuilder()
                 .boardId(boardId)
+                .userId(postRequestDto.getUserId())
                 .build();
 
         // 로그 추가 (postRequestDto가 boardId를 잘 포함했는지 확인)
