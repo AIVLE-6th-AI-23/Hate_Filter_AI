@@ -38,7 +38,7 @@ public class PostController {
      * @return 생성된 POST id
      */
     @PostMapping("/")
-    public ResponseEntity<Long> create(@RequestBody PostRequestDto postRequestDto,
+    public ResponseEntity<Long> createPost(@RequestBody PostRequestDto postRequestDto,
                                        @PathVariable Long boardId){
         postRequestDto = postRequestDto.toBuilder()
                 .boardId(boardId)
