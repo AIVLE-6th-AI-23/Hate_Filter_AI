@@ -2,7 +2,9 @@ package com.github.aivle6th.ai23.springboot_backend.service;
 
 import com.github.aivle6th.ai23.springboot_backend.dto.PostRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.PostResponseDto;
+import com.github.aivle6th.ai23.springboot_backend.entity.Board;
 import com.github.aivle6th.ai23.springboot_backend.entity.Post;
+import com.github.aivle6th.ai23.springboot_backend.repository.BoardRepository;
 import com.github.aivle6th.ai23.springboot_backend.repository.PostRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PostService {
     private final PostRepository postRepository;
+    private final BoardRepository boardRepository;
 
     /**
      * 보드 ID에 맞는 POST 목록 전달 함수
@@ -24,7 +27,7 @@ public class PostService {
      * @return List<PostResponseDto>
      */
     public List<PostResponseDto> getPostByBoard(Long boardId) {
-        List<Post> posts = postRepository.findByBoardId(boardId);
+        List<Post> posts = postRepository.findByBoard_boardId(boardId);
         return posts.stream()
                 .map(PostResponseDto::EntityToResponse)
                 .collect(Collectors.toList());
@@ -65,7 +68,6 @@ public class PostService {
         Post updatedPost = post.toBuilder()
                 .postTitle(postRequestDto.getPostTitle())
                 .description(postRequestDto.getDescription())
-                .modifiedAt(LocalDateTime.now()) // 수정일시 갱신
                 .build();
 
         Post savedPost = postRepository.save(updatedPost);

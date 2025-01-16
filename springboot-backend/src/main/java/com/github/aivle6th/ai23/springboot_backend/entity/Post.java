@@ -42,4 +42,21 @@ public class Post {
     @OneToOne(mappedBy = "post")
     private ContentAnalysis contentAnalysis;
 
+    // 엔티티 저장 시 기본값 설정
+    @PrePersist
+    protected void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
+        if (this.viewCount == null) {
+            this.viewCount = 0L;
+        }
+    }
+
+    // 엔티티 수정 시 수정 시간 갱신
+    @PreUpdate
+    protected void onUpdate() {
+        this.modifiedAt = LocalDateTime.now();
+    }
+
 }
