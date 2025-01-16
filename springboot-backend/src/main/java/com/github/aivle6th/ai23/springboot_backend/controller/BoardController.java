@@ -1,8 +1,8 @@
 package com.github.aivle6th.ai23.springboot_backend.controller;
 
-import com.github.aivle6th.ai23.springboot_backend.dto.ApiResponse;
-import com.github.aivle6th.ai23.springboot_backend.dto.BoardCreateRequest;
-import com.github.aivle6th.ai23.springboot_backend.dto.BoardDTO;
+import com.github.aivle6th.ai23.springboot_backend.dto.ApiResponseDto;
+import com.github.aivle6th.ai23.springboot_backend.dto.BoardCreateRequestDto;
+import com.github.aivle6th.ai23.springboot_backend.dto.BoardDto;
 import com.github.aivle6th.ai23.springboot_backend.entity.Board;
 import com.github.aivle6th.ai23.springboot_backend.service.BoardService;
 import lombok.RequiredArgsConstructor;
@@ -22,52 +22,52 @@ public class BoardController {
     private final BoardService boardService;
 
     @GetMapping("/{deptId}")
-    public ResponseEntity<ApiResponse<List<BoardDTO>>> getBoardsByDepartment(@PathVariable String deptId) {
+    public ResponseEntity<ApiResponseDto<List<BoardDto>>> getBoardsByDepartment(@PathVariable String deptId) {
         List<Board> boards = boardService.getBoardsByDepartment(deptId);
-        List<BoardDTO> boardDTOs = boards.stream()
-                .map(BoardDTO::from)
+        List<BoardDto> boardDtos = boards.stream()
+                .map(BoardDto::from)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(new ApiResponse<>(true, "게시판 조회 성공", boardDTOs));
+        return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 조회 성공", boardDtos));
     }
 
-    @PostMapping("/")
-    public ResponseEntity<ApiResponse<BoardDTO>> createBoard(@RequestBody BoardCreateRequest request) {
+    @PostMapping("")
+    public ResponseEntity<ApiResponseDto<BoardDto>> createBoard(@RequestBody BoardCreateRequestDto request) {
         try {
             Board savedBoard = boardService.createBoard(request);
-            return ResponseEntity.ok(new ApiResponse<>(true, "게시판 생성 성공", BoardDTO.from(savedBoard)));
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 생성 성공", BoardDto.from(savedBoard)));
         } catch (Exception e) {
             log.error("게시판 생성 실패: ", e);  // 로그 추가
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>(false, "게시판 생성 실패: " + e.getMessage(), null));
+                    .body(new ApiResponseDto<>(false, "게시판 생성 실패: " + e.getMessage(), null));
         }
     }
 
     @GetMapping("/detail/{boardId}")
-    public ResponseEntity<ApiResponse<BoardDTO>> getBoardById(@PathVariable Long boardId) {
+    public ResponseEntity<ApiResponseDto<BoardDto>> getBoardById(@PathVariable Long boardId) {
         Board board = boardService.getBoardById(boardId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "게시판 조회 성공", BoardDTO.from(board)));
+        return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 조회 성공", BoardDto.from(board)));
     }
 
     @PutMapping("/{boardId}")
-    public ResponseEntity<ApiResponse<BoardDTO>> updateBoard(
+    public ResponseEntity<ApiResponseDto<BoardDto>> updateBoard(
             @PathVariable Long boardId,
-            @RequestBody BoardCreateRequest request) {
+            @RequestBody BoardCreateRequestDto request) {
         Board updatedBoard = boardService.updateBoard(boardId, request);
-        return ResponseEntity.ok(new ApiResponse<>(true, "게시판 수정 성공", BoardDTO.from(updatedBoard)));
+        return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 수정 성공", BoardDto.from(updatedBoard)));
     }
 
     @DeleteMapping("/{boardId}")
-    public ResponseEntity<ApiResponse<Void>> deleteBoard(@PathVariable Long boardId) {
+    public ResponseEntity<ApiResponseDto<Void>> deleteBoard(@PathVariable Long boardId) {
         boardService.deleteBoard(boardId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "게시판 삭제 성공", null));
+        return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 삭제 성공", null));
     }
 
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<BoardDTO>>> getAllBoards() {
+    public ResponseEntity<ApiResponseDto<List<BoardDto>>> getAllBoards() {
         List<Board> boards = boardService.getAllBoards();
-        List<BoardDTO> boardDTOs = boards.stream()
-                .map(BoardDTO::from)
+        List<BoardDto> boardDtos = boards.stream()
+                .map(BoardDto::from)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(new ApiResponse<>(true, "전체 게시판 조회 성공", boardDTOs));
+        return ResponseEntity.ok(new ApiResponseDto<>(true, "전체 게시판 조회 성공", boardDtos));
     }
 }

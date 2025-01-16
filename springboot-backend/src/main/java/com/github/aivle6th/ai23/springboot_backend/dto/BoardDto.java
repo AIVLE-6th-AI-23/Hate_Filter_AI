@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BoardDTO {
+public class BoardDto {
     private Long boardId;
     private String boardTitle;
     private String description;
@@ -22,12 +22,12 @@ public class BoardDTO {
     private LocalDateTime endDate;
     private List<String> deptIds;
 
-    public static BoardDTO from(Board board) {
+    public static BoardDto from(Board board) {
         List<String> deptIds = board.getBoardDepartments().stream()
                 .map(boardDepartment -> boardDepartment.getDepartment().getDeptId())
                 .toList();
 
-        return BoardDTO.builder()
+        return BoardDto.builder()
                 .boardId(board.getBoardId())
                 .boardTitle(board.getBoardTitle())
                 .description(board.getDescription())

@@ -1,7 +1,6 @@
 package com.github.aivle6th.ai23.springboot_backend.service;
 
-import com.github.aivle6th.ai23.springboot_backend.dto.BoardCreateRequest;
-import com.github.aivle6th.ai23.springboot_backend.dto.BoardDTO;
+import com.github.aivle6th.ai23.springboot_backend.dto.BoardCreateRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.entity.Board;
 import com.github.aivle6th.ai23.springboot_backend.entity.BoardDepartment;
 import com.github.aivle6th.ai23.springboot_backend.entity.Department;
@@ -13,9 +12,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -54,7 +51,7 @@ public class BoardService {
     }
 
     // 게시판 생성
-    public Board createBoard(BoardCreateRequest request) {
+    public Board createBoard(BoardCreateRequestDto request) {
         // 1. Board 엔티티 생성
         Board board = Board.builder()
                 .boardTitle(request.getBoardTitle())
@@ -85,7 +82,7 @@ public class BoardService {
     }
 
     // 게시판 수정
-    public Board updateBoard(Long boardId, BoardCreateRequest request) {
+    public Board updateBoard(Long boardId, BoardCreateRequestDto request) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("게시판을 찾을 수 없습니다: " + boardId));
 

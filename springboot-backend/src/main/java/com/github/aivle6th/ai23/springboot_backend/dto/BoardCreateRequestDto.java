@@ -12,7 +12,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class BoardCreateRequest {
+public class BoardCreateRequestDto {
     private String boardTitle;
     private String description;
     private Boolean isPublic;
