@@ -1,57 +1,51 @@
 package com.github.aivle6th.ai23.springboot_backend.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.http.StreamingHttpOutputMessage;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalTime;
 
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
-@NoArgsConstructor
-@Table(name = "USER")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
-    private Long userId;
+    private Long  userId;
 
-    @Column(name = "employee_id")
+    @Column(name = "employee_id", nullable = false)
     private String employeeId;
 
-    @Column(name = "user_name")
+    @Column(name = "user_name", nullable = false)
     private String userName;
 
-    @Column(name = "email")
+    @Column(name = "email", nullable = false)
     private String email;
 
-    @Column(name = "pwd")
+    @Column(name = "pwd", nullable = false)
     private String pwd;
 
-    @Column(name = "is_active")
-    private Boolean isActive;
+    @Column(name = "dept_id")
+    private String deptId;
 
-    @Column(name = "created_at")
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = false;
+
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
-    @OneToMany(mappedBy = "user")
-    private List<AuditLog> auditLogs = new ArrayList<>();
-
     @ManyToOne
-    @JoinColumn(name = "dept_id")
+    @JoinColumn(name = "dept_id", insertable = false, updatable = false)
     private Department department;
-
-    public void updateLastLogin(LocalDateTime lastLogin) {
-        this.lastLogin = lastLogin;
-    }
-
-    // 비밀번호 암호화 메소드
-    public void setPassword(String password) {
-        this.pwd = password;
-    }
 }
