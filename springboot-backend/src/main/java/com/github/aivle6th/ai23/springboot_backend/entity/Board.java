@@ -1,7 +1,12 @@
 package com.github.aivle6th.ai23.springboot_backend.entity;
 
+import com.github.aivle6th.ai23.springboot_backend.entity.BoardDepartment;
+import com.github.aivle6th.ai23.springboot_backend.entity.Post;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -9,7 +14,7 @@ import java.util.List;
 
 @Entity
 @Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "BOARD")
 public class Board {
     @Id
@@ -32,9 +37,28 @@ public class Board {
     @Column(name = "end_date")
     private LocalDateTime endDate;
 
-    @OneToMany(mappedBy = "board")
+    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL)
     private List<BoardDepartment> boardDepartments = new ArrayList<>();
 
     @OneToMany(mappedBy = "board")
     private List<Post> posts = new ArrayList<>();
+
+    @Builder
+    public Board(Long boardId, String boardTitle, String description, Boolean isPublic, LocalDateTime endDate) {
+        this.boardId = boardId;
+        this.boardTitle = boardTitle;
+        this.description = description;
+        this.isPublic = isPublic;
+        this.endDate = endDate;
+        this.createdAt = LocalDateTime.now();
+    }
+
+    public void updateBoard(String boardTitle, String description, Boolean isPublic, LocalDateTime endDate) {
+        this.boardTitle = boardTitle;
+        this.description = description;
+        this.isPublic = isPublic;
+        this.endDate = endDate;
+    }
 }
+
+

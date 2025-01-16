@@ -4,11 +4,14 @@ import com.github.aivle6th.ai23.springboot_backend.entity.Board;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Builder
+@NoArgsConstructor
 @AllArgsConstructor
 public class BoardDTO {
     private Long boardId;
@@ -17,15 +20,21 @@ public class BoardDTO {
     private Boolean isPublic;
     private LocalDateTime createdAt;
     private LocalDateTime endDate;
+    private List<String> deptIds;
 
     public static BoardDTO from(Board board) {
-        return new BoardDTO(
-                board.getBoardId(),
-                board.getBoardTitle(),
-                board.getDescription(),
-                board.getIsPublic(),
-                board.getCreatedAt(),
-                board.getEndDate()
-        );
+        List<String> deptIds = board.getBoardDepartments().stream()
+                .map(boardDepartment -> boardDepartment.getDepartment().getDeptId())
+                .toList();
+
+        return BoardDTO.builder()
+                .boardId(board.getBoardId())
+                .boardTitle(board.getBoardTitle())
+                .description(board.getDescription())
+                .isPublic(board.getIsPublic())
+                .createdAt(board.getCreatedAt())
+                .endDate(board.getEndDate())
+                .deptIds(deptIds)
+                .build();
     }
 }
