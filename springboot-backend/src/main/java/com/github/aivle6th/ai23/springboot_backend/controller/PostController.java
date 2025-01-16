@@ -64,6 +64,12 @@ public class PostController {
         postService.incrementViewCount(postId);
         return ResponseEntity.ok().build();
     }
-    // POST 삭제?
+
+    // POST 삭제
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<Void>deletePost(@PathVariable Long postId){
+        postService.deletePostById(postId);
+        return ResponseEntity.ok().build();
+    }
 }
 

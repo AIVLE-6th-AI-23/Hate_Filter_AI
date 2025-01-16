@@ -84,6 +84,19 @@ public class PostService {
      */
     @Transactional
     public void incrementViewCount(Long postId) {
+
         postRepository.increaseViewCount(postId);
+    }
+
+    /**
+     * POST 삭제
+     * @param postId
+     */
+    public void deletePostById(Long postId) {
+        // 존재 유무 확인
+        if(!postRepository.existsById(postId)){
+            throw new EntityNotFoundException("Post ID " + postId + " is not found");
+        }
+        postRepository.deleteById(postId);
     }
 }
