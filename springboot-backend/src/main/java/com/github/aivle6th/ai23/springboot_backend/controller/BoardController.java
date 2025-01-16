@@ -16,12 +16,12 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/boards")
 @RequiredArgsConstructor
 public class BoardController {
     private final BoardService boardService;
 
-    @GetMapping("/boards/{deptId}")
+    @GetMapping("/{deptId}")
     public ResponseEntity<ApiResponse<List<BoardDTO>>> getBoardsByDepartment(@PathVariable String deptId) {
         List<Board> boards = boardService.getBoardsByDepartment(deptId);
         List<BoardDTO> boardDTOs = boards.stream()
@@ -30,7 +30,7 @@ public class BoardController {
         return ResponseEntity.ok(new ApiResponse<>(true, "게시판 조회 성공", boardDTOs));
     }
 
-    @PostMapping("/boards/create")
+    @PostMapping("/")
     public ResponseEntity<ApiResponse<BoardDTO>> createBoard(@RequestBody BoardCreateRequest request) {
         try {
             Board savedBoard = boardService.createBoard(request);
@@ -42,13 +42,13 @@ public class BoardController {
         }
     }
 
-    @GetMapping("/boards/detail/{boardId}")
+    @GetMapping("/detail/{boardId}")
     public ResponseEntity<ApiResponse<BoardDTO>> getBoardById(@PathVariable Long boardId) {
         Board board = boardService.getBoardById(boardId);
         return ResponseEntity.ok(new ApiResponse<>(true, "게시판 조회 성공", BoardDTO.from(board)));
     }
 
-    @PutMapping("/boards/update/{boardId}")
+    @PutMapping("/{boardId}")
     public ResponseEntity<ApiResponse<BoardDTO>> updateBoard(
             @PathVariable Long boardId,
             @RequestBody BoardCreateRequest request) {
@@ -56,13 +56,13 @@ public class BoardController {
         return ResponseEntity.ok(new ApiResponse<>(true, "게시판 수정 성공", BoardDTO.from(updatedBoard)));
     }
 
-    @DeleteMapping("/boards/delete/{boardId}")
+    @DeleteMapping("/{boardId}")
     public ResponseEntity<ApiResponse<Void>> deleteBoard(@PathVariable Long boardId) {
         boardService.deleteBoard(boardId);
         return ResponseEntity.ok(new ApiResponse<>(true, "게시판 삭제 성공", null));
     }
 
-    @GetMapping("/boards")
+    @GetMapping("/all")
     public ResponseEntity<ApiResponse<List<BoardDTO>>> getAllBoards() {
         List<Board> boards = boardService.getAllBoards();
         List<BoardDTO> boardDTOs = boards.stream()
