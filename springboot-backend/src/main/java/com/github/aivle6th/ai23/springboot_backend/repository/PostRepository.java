@@ -13,7 +13,7 @@ import java.util.List;
 public interface PostRepository extends JpaRepository<Post, Long> {
 
 
-    List<Post> findByBoardId(Long boardId);
+    List<Post> findByBoard_boardId(Long boardId);
 
     Post findByPostId(Long postId);
 

@@ -4,11 +4,13 @@ import com.github.aivle6th.ai23.springboot_backend.dto.PostRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.PostResponseDto;
 import com.github.aivle6th.ai23.springboot_backend.service.PostService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/{boardId}/posts")
 @RequiredArgsConstructor
@@ -20,7 +22,7 @@ public class PostController {
     @GetMapping("/")
     public ResponseEntity<List<PostResponseDto>> getPostByBoardId(@PathVariable Long boardId){
         List<PostResponseDto> posts = postService.getPostByBoard(boardId);
-        //if(posts.isEmpty()) return ResponseEntity.notFound().build(); 없을 때는 어떻게 처리하지?
+            if(posts.isEmpty()) return ResponseEntity.notFound().build(); //없을 때는 어떻게 처리하지?
         return ResponseEntity.ok(posts);
     }
 
@@ -36,7 +38,15 @@ public class PostController {
      * @return 생성된 POST id
      */
     @PostMapping("/")
-    public ResponseEntity<Long> create(@RequestBody PostRequestDto postRequestDto){
+    public ResponseEntity<Long> create(@RequestBody PostRequestDto postRequestDto,
+                                       @PathVariable Long boardId){
+        postRequestDto = postRequestDto.toBuilder()
+                .boardId(boardId)
+                .build();
+
+        // 로그 추가 (postRequestDto가 boardId를 잘 포함했는지 확인)
+        log.info("Updated PostRequestDto with boardId: {}", postRequestDto);
+
         return ResponseEntity.ok(postService.createPost(postRequestDto));
     }
 

@@ -23,7 +23,7 @@ public class PostResponseDto {
     public static PostResponseDto EntityToResponse(Post post) {
         return PostResponseDto.builder()
                 .postId(post.getPostId())
-                .boardId(post.getBoardId())
+                .boardId(post.getBoard().getBoardId())
                 .postTitle(post.getPostTitle())
                 .description(post.getDescription())
                 .createdAt(post.getCreatedAt())

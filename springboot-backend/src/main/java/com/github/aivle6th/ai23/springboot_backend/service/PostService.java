@@ -11,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,8 +48,12 @@ public class PostService {
      * @return 생성한 postId 일단 id만, 생성한거 잘 들어갔는지 전부 다 보고 싶으면 post로 내놓기
      */
     public Long createPost(PostRequestDto postRequestDto) {
+
+        Board board = boardRepository.findById(postRequestDto.getBoardId())
+                .orElseThrow(()-> new EntityNotFoundException("Board not found"));
         // RequestDto -> Entity 변환
-        Post post = postRequestDto.toEntity();
+        Post post = postRequestDto.toEntity(board);
+
         Post savedPost = postRepository.save(post);
         return savedPost.getPostId();
     }
