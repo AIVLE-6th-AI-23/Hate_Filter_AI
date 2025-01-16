@@ -1,7 +1,9 @@
 package com.github.aivle6th.ai23.springboot_backend.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -45,6 +47,9 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "dept_id")
     private Department department;
+
+    @OneToMany(mappedBy = "user")
+    private List<Post> post = new ArrayList<>();
 
     public void updateLastLogin(LocalDateTime lastLogin) {
         this.lastLogin = lastLogin;
