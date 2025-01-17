@@ -1,35 +1,30 @@
 package com.github.aivle6th.ai23.springboot_backend.dto;
 
+import com.github.aivle6th.ai23.springboot_backend.entity.Board;
 import com.github.aivle6th.ai23.springboot_backend.entity.Post;
+import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Getter
-@Builder
+@Builder(toBuilder = true)
 @RequiredArgsConstructor
 public class PostRequestDto {
-    private final Long postId;
+
     private final Long boardId;
+    private final Long userId;
     private final String postTitle;
     private final String description;
-    private final LocalDateTime createdAt;
-    private final LocalDateTime modifiedAt;
-    private final Long viewCount;
 
     // Entity 변환 메서드
     //TODO Mapper로 수정하기
-    public Post toEntity() {
+    public Post toEntity(Board board, User user) {
         return Post.builder()
-                .postId(postId)
-                .boardId(boardId)
+                .board(board)
+                .user(user)
                 .postTitle(postTitle)
                 .description(description)
-                .createdAt(createdAt)
-                .modifiedAt(modifiedAt)
-                .viewCount(viewCount)
                 .build();
     }
 }

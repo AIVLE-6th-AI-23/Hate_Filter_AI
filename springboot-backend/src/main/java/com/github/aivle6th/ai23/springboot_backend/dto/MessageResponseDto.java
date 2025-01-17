@@ -2,11 +2,13 @@ package com.github.aivle6th.ai23.springboot_backend.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
+@Setter
 @AllArgsConstructor
-public class ApiResponse<T> {
-    private boolean success;
+@NoArgsConstructor
+public class MessageResponseDto {
     private String message;
-    private T data;
 }

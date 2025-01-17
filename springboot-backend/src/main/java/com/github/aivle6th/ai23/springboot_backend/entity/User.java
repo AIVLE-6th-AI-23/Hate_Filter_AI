@@ -39,12 +39,15 @@ public class User {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
-    @OneToMany(mappedBy = "user")
-    private List<AuditLog> auditLogs = new ArrayList<>();
-
     @ManyToOne
     @JoinColumn(name = "dept_id")
     private Department department;
+
+    @OneToMany(mappedBy = "user")
+    private List<AuditLog> auditLogs = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user")
+    private List<Post> posts = new ArrayList<>();
 
     public void updateLastLogin(LocalDateTime lastLogin) {
         this.lastLogin = lastLogin;

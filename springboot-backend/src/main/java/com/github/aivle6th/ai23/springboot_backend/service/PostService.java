@@ -4,21 +4,26 @@ import com.github.aivle6th.ai23.springboot_backend.dto.PostRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.PostResponseDto;
 import com.github.aivle6th.ai23.springboot_backend.entity.Board;
 import com.github.aivle6th.ai23.springboot_backend.entity.Post;
+import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import com.github.aivle6th.ai23.springboot_backend.repository.BoardRepository;
 import com.github.aivle6th.ai23.springboot_backend.repository.PostRepository;
+import com.github.aivle6th.ai23.springboot_backend.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostService {
     private final PostRepository postRepository;
     private final BoardRepository boardRepository;
+    private final UserRepository userRepository;
 
     /**
      * 보드 ID에 맞는 POST 목록 전달 함수
@@ -51,8 +56,12 @@ public class PostService {
 
         Board board = boardRepository.findById(postRequestDto.getBoardId())
                 .orElseThrow(()-> new EntityNotFoundException("Board not found"));
+
+        User user = userRepository.findById(postRequestDto.getUserId())
+                .orElseThrow(()-> new EntityNotFoundException("User not found"));
+
         // RequestDto -> Entity 변환
-        Post post = postRequestDto.toEntity(board);
+        Post post = postRequestDto.toEntity(board, user);
 
         Post savedPost = postRepository.save(post);
         return savedPost.getPostId();
