@@ -1,64 +1,35 @@
 package com.github.aivle6th.ai23.springboot_backend.config;
 
-import com.github.aivle6th.ai23.springboot_backend.util.JwtUtil;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
+import com.github.aivle6th.ai23.springboot_backend.service.CustomUserDetailService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-@Configuration
-@EnableWebSecurity
-@RequiredArgsConstructor
+@EnableWebSecurity          // Spring Security 활성화 하고 웹 보안 설정을 구성하는데 사용하는 Annotation
+@Configuration              // 해당 클래스가 @Bean 메서드를 포함하고 있으며, 스프링 컨테이너에 의해 빈 정의를 생성하는 데 사용할 수 있다.
 public class SecurityConfig {
-    private final JwtUtil jwtUtil;
+
+    @Autowired
+    private CustomUserDetailService userDetailService;
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-//    @Bean
-//    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-//        http
-//                .csrf(AbstractHttpConfigurer::disable)
-//                .sessionManagement(session -> session
-//                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-//                )
-//                .formLogin(AbstractHttpConfigurer::disable)
-//                .httpBasic(AbstractHttpConfigurer::disable)
-//                .addFilterBefore(new com.github.aivle6th.ai23.springboot_backend.security.filter.JwtAuthenticationFilter(jwtUtil),
-//                        UsernamePasswordAuthenticationFilter.class)
-//                .authorizeHttpRequests(auth -> auth
-//                        .requestMatchers("/api/auth/**").permitAll()
-//                        .requestMatchers("/api/boards/**").authenticated()
-//                        .anyRequest().authenticated()
-//                );
-//
-//        return http.build();
-//    }
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         http
-                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
+                        .requestMatchers("/join", "/jointest").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .csrf(csrf -> csrf.disable())       // for test
+                // .formLogin(Customizer.withDefaults());
+                .formLogin(form -> form
+                        .usernameParameter("employeeId")
+                        .passwordParameter("pwd")
+                        .loginProcessingUrl("/login")
+                        .defaultSuccessUrl("/", true)
                 );
-
         return http.build();
     }
 }
