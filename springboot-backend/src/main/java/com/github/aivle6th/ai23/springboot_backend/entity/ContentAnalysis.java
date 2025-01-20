@@ -36,7 +36,7 @@ public class ContentAnalysis {
     @JoinColumn(name = "post_id")
     private Post post;
 
-    @OneToMany(mappedBy = "contentAnalysis")
+    @OneToMany(mappedBy = "contentAnalysis" ,cascade = CascadeType.ALL)
     private List<AnalysisCategoryResult> analysisCategoryResults = new ArrayList<>();
 
 }
