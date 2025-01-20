@@ -7,8 +7,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor
-public class MessageResponse {
+@AllArgsConstructor
+public class LogoutResponseDto {
     private String message;
 }

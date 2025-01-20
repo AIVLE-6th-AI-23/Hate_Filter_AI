@@ -8,7 +8,9 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @Table(name = "BOARD_DEPARTMENT")
+@EqualsAndHashCode(of = "boardId")
 public class BoardDepartment {
     @Id
     @Column(name = "board_dept_id")

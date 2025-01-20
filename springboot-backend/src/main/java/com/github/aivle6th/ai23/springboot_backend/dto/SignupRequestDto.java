@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-public class SignupRequest {
+public class SignupRequestDto {
 
     @NotEmpty(message = "사원번호는 필수 입력값입니다")
     private String employeeId;
