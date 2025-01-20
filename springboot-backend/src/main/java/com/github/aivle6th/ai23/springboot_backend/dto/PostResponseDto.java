@@ -12,6 +12,7 @@ public class PostResponseDto {
 
     private final Long postId;
     private final Long boardId;
+    private final Long userId;
     private final String postTitle;
     private final String description;
     private final LocalDateTime createdAt;
@@ -24,6 +25,7 @@ public class PostResponseDto {
         return PostResponseDto.builder()
                 .postId(post.getPostId())
                 .boardId(post.getBoard().getBoardId())
+                .userId(post.getUser().getUserId())
                 .postTitle(post.getPostTitle())
                 .description(post.getDescription())
                 .createdAt(post.getCreatedAt())
