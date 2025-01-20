@@ -52,7 +52,7 @@ public class PostService {
      * @param postRequestDto
      * @return 생성한 postId 일단 id만, 생성한거 잘 들어갔는지 전부 다 보고 싶으면 post로 내놓기
      */
-    public Long createPost(PostRequestDto postRequestDto) {
+    public PostResponseDto createPost(PostRequestDto postRequestDto) {
 
         Board board = boardRepository.findById(postRequestDto.getBoardId())
                 .orElseThrow(()-> new EntityNotFoundException("Board not found"));
@@ -64,7 +64,8 @@ public class PostService {
         Post post = postRequestDto.toEntity(board, user);
 
         Post savedPost = postRepository.save(post);
-        return savedPost.getPostId();
+        // Entity -> ResponseDto 변환
+        return PostResponseDto.EntityToResponse(savedPost);
     }
 
     /**
