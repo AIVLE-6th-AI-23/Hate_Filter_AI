@@ -1,9 +1,8 @@
-import re
-from typing import List, Union
+from .base_imports import re, List, Union
 
 class TextPreprocessor:
     def __init__(self):
-        self.max_length = 512  # 또는 모델에 맞는 길이
+        # self.max_length = 512  # 텍스트 최대 길이
 
     def process(self, text: Union[str, List[str]]) -> Union[str, List[str]]:
         if isinstance(text, list):
@@ -11,9 +10,16 @@ class TextPreprocessor:
         return self._preprocess_text(text)
 
     def _preprocess_text(self, text: str) -> str:
-        # 텍스트 정제
+        # 소문자 변환
         text = text.lower()
+        
+        # 특수문자 제거
         text = re.sub(r'[^\w\s]', '', text)
+        
+        # 공백 정규화
         text = ' '.join(text.split())
-        # 텍스트 길이 제한
-        return text[:self.max_length]
+        
+        # # 길이 제한
+        # text = text[:self.max_length]
+        
+        return text
