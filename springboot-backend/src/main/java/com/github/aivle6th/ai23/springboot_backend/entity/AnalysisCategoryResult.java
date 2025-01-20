@@ -6,6 +6,8 @@ import lombok.*;
 @Entity
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
 @Table(name = "ANALYSIS_CATEGORY_RESULT")
 public class AnalysisCategoryResult {
     @Id
@@ -19,11 +21,11 @@ public class AnalysisCategoryResult {
     @Column(name = "detection_metadata")
     private String detectionMetadata;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "analysis_id")
     private ContentAnalysis contentAnalysis;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private HateCategory hateCategory;
 }

@@ -9,8 +9,11 @@ import java.util.List;
 
 @Entity
 @Getter
-@NoArgsConstructor
+@Setter
 @Table(name = "CONTENT_ANALYSIS")
+@Builder(toBuilder = true)
+@AllArgsConstructor
+@NoArgsConstructor
 public class ContentAnalysis {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,4 +38,5 @@ public class ContentAnalysis {
 
     @OneToMany(mappedBy = "contentAnalysis")
     private List<AnalysisCategoryResult> analysisCategoryResults = new ArrayList<>();
+
 }
