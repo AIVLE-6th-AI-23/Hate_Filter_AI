@@ -35,9 +35,7 @@ public class ContentAnalysisController {
                 postId
         );
         log.info(requestDto.getContentAnalysisRequestDto().getContentType());
-        if (requestDto == null) {
-            throw new IllegalArgumentException("Request body is null");
-        }
+
 
         ContentAnalysisResponseDto savedresponseDto = ContentAnalysisResponseDto.analysisToDto(contentAnalysis);
         return ResponseEntity.ok(new ApiResponseDto<>(true , "분석결과 생성 성공" ,  savedresponseDto));

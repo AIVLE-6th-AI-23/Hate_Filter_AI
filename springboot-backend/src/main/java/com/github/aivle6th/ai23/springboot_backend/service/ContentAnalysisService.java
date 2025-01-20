@@ -7,6 +7,7 @@ import com.github.aivle6th.ai23.springboot_backend.entity.AnalysisCategoryResult
 import com.github.aivle6th.ai23.springboot_backend.entity.ContentAnalysis;
 import com.github.aivle6th.ai23.springboot_backend.entity.HateCategory;
 import com.github.aivle6th.ai23.springboot_backend.entity.Post;
+import com.github.aivle6th.ai23.springboot_backend.repository.AnalysisCategoryResultRepository;
 import com.github.aivle6th.ai23.springboot_backend.repository.ContentAnalysisRepository;
 import com.github.aivle6th.ai23.springboot_backend.repository.HateCategoryRepository;
 import com.github.aivle6th.ai23.springboot_backend.repository.PostRepository;
@@ -14,6 +15,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -24,6 +26,7 @@ public class ContentAnalysisService {
 
     private final ContentAnalysisRepository contentAnalysisRepository;
     private final HateCategoryRepository hateCategoryRepository;
+    private final AnalysisCategoryResultRepository analysisCategoryResultRepository;
     private final PostRepository postRepository;
 
     public ContentAnalysisResponseDto getContentAnalysisWithPost(Long postId) {
@@ -35,6 +38,7 @@ public class ContentAnalysisService {
 
     }
 
+    @Transactional
     public ContentAnalysis createContentAnalysis(ContentAnalysisRequestDto contentAnalysisRequestDto,
                                                  List<AnalysisCategoryResultRequestDto> analysisCategoryResultDtos,
                                                  Long postId) {
@@ -63,7 +67,8 @@ public class ContentAnalysisService {
 
         contentAnalysis.setAnalysisCategoryResults(categoryResults);
 
-
+        // AnalysisCategoryResult 저장
+        analysisCategoryResultRepository.saveAll(categoryResults);
         //ContentAnalysis 저장
         return contentAnalysisRepository.save(contentAnalysis);
     }
