@@ -5,12 +5,15 @@ import com.github.aivle6th.ai23.springboot_backend.dto.BoardCreateRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.BoardDto;
 import com.github.aivle6th.ai23.springboot_backend.entity.Board;
 import com.github.aivle6th.ai23.springboot_backend.service.BoardService;
+import com.github.aivle6th.ai23.springboot_backend.service.UserService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,17 +23,26 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BoardController {
     private final BoardService boardService;
+    private final UserService userService;
 
-    @GetMapping("/{deptId}")
-    public ResponseEntity<ApiResponseDto<List<BoardDto>>> getBoardsByDepartment(@PathVariable String deptId) {
-        List<Board> boards = boardService.getBoardsByDepartment(deptId);
+    @GetMapping("/{employeeId}")
+    public ResponseEntity<ApiResponseDto<List<BoardDto>>> getBoards(
+        @PathVariable String employeeId,
+        @RequestParam(required = false) LocalDateTime cursor,
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "active") String status
+    ) {
+        String deptId = userService.getDeptIdByEmployeeId(employeeId);
+        List<Board> boards = "active".equalsIgnoreCase(status)     ?  boardService.getActiveBoardsByDepartment(deptId, cursor, size) : 
+                             "completed".equalsIgnoreCase(status)  ?  boardService.getCompletedBoardsByDepartment(deptId, cursor, size) : 
+                                                                      boardService.getBoardsByDepartment(deptId, cursor, size);
         List<BoardDto> boardDtos = boards.stream()
                 .map(BoardDto::from)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 조회 성공", boardDtos));
     }
 
-    @PostMapping("")
+    @PostMapping("/create")
     public ResponseEntity<ApiResponseDto<BoardDto>> createBoard(@RequestBody BoardCreateRequestDto request) {
         try {
             Board savedBoard = boardService.createBoard(request);

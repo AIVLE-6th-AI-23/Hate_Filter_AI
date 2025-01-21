@@ -7,11 +7,15 @@ import com.github.aivle6th.ai23.springboot_backend.entity.Department;
 import com.github.aivle6th.ai23.springboot_backend.repository.BoardDepartmentRepository;
 import com.github.aivle6th.ai23.springboot_backend.repository.BoardRepository;
 import com.github.aivle6th.ai23.springboot_backend.repository.DepartmentRepository;
+
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -21,11 +25,23 @@ public class BoardService {
     private final BoardRepository boardRepository;
     private final DepartmentRepository departmentRepository;
     private final BoardDepartmentRepository boardDepartmentRepository;
+    private final UserService userService;
 
-    // 부서별 게시판 조회
-    public List<Board> getBoardsByDepartment(String deptId) {
-        return boardRepository.findByBoardDepartments_Department_DeptId(deptId);
+    public List<Board> getActiveBoardsByDepartment(String employeeId, LocalDateTime cursor, int size) {
+        String deptId = userService.getDeptIdByEmployeeId(employeeId);    
+        return boardRepository.findActiveBoardsByDepartmentWithCursor(deptId, cursor, PageRequest.of(0, size));
     }
+
+    public List<Board> getCompletedBoardsByDepartment(String employeeId, LocalDateTime cursor, int size) {
+        String deptId = userService.getDeptIdByEmployeeId(employeeId);    
+        return boardRepository.findCompletedBoardsByDepartmentWithCursor(deptId, cursor, PageRequest.of(0, size));
+    }
+
+    public List<Board> getBoardsByDepartment(String employeeId, LocalDateTime cursor, int size) {
+        String deptId = userService.getDeptIdByEmployeeId(employeeId);    
+        return boardRepository.findBoardsByDepartmentWithCursor(deptId, cursor, PageRequest.of(0, size));
+    }
+
 
     // 게시판 상세 조회
     public Board getBoardById(Long boardId) {
