@@ -1,167 +1,105 @@
--- Department 테이블 생성
-CREATE TABLE DEPARTMENT (
-    dept_id VARCHAR(50) PRIMARY KEY,
-    dept_name VARCHAR(100) NOT NULL
+-- MySQL script to create tables for the database 'hate_filter_ai'
+
+-- Table structure for `department`
+DROP TABLE IF EXISTS `department`;
+CREATE TABLE `department` (
+  `dept_id` VARCHAR(255) NOT NULL,
+  `dept_name` VARCHAR(255),
+  PRIMARY KEY (`dept_id`)
 );
 
--- User 테이블 생성
-CREATE TABLE USER (
-    user_id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    employee_id VARCHAR(50) NOT NULL,
-    user_name VARCHAR(50) NOT NULL,
-    email VARCHAR(100) NOT NULL,
-    pwd VARCHAR(255) NOT NULL,
-    dept_id VARCHAR(50),
-    is_active BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP,
-    FOREIGN KEY (dept_id) REFERENCES DEPARTMENT(dept_id),
-    UNIQUE (employee_id, email)
+-- Table structure for `user`
+DROP TABLE IF EXISTS `user`;
+CREATE TABLE `user` (
+  `is_active` BIT(1),
+  `created_at` DATETIME(6),
+  `last_login` DATETIME(6),
+  `user_id` BIGINT NOT NULL AUTO_INCREMENT,
+  `dept_id` VARCHAR(255),
+  `email` VARCHAR(255),
+  `employee_id` VARCHAR(255),
+  `pwd` VARCHAR(255),
+  `user_name` VARCHAR(255),
+  PRIMARY KEY (`user_id`),
+  FOREIGN KEY (`dept_id`) REFERENCES `department` (`dept_id`)
 );
 
--- Board 테이블 생성     *******************************************************
-CREATE TABLE BOARD (
-    board_id BIGINT PRIMARY KEY,
-    board_title VARCHAR(100) NOT NULL,
-    description TEXT,
-    is_public BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    end_date TIMESTAMP
+-- Table structure for `board`
+DROP TABLE IF EXISTS `board`;
+CREATE TABLE `board` (
+  `is_public` BIT(1),
+  `board_id` BIGINT NOT NULL AUTO_INCREMENT,
+  `created_at` DATETIME(6),
+  `end_date` DATETIME(6),
+  `board_title` VARCHAR(255),
+  `description` VARCHAR(255),
+  PRIMARY KEY (`board_id`)
 );
 
--- Post 테이블 생성
-CREATE TABLE POST (
-    post_id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    board_id BIGINT,
-    post_title VARCHAR(200) NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    modified_at TIMESTAMP,
-    view_count BIGINT DEFAULT 0,
-    FOREIGN KEY (board_id) REFERENCES BOARD(board_id)
+-- Table structure for `post`
+DROP TABLE IF EXISTS `post`;
+CREATE TABLE `post` (
+  `board_id` BIGINT,
+  `created_at` DATETIME(6),
+  `modified_at` DATETIME(6),
+  `post_id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT,
+  `view_count` BIGINT,
+  `description` VARCHAR(255),
+  `post_title` VARCHAR(255),
+  PRIMARY KEY (`post_id`),
+  FOREIGN KEY (`board_id`) REFERENCES `board` (`board_id`),
+  FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`)
 );
 
--- Audit_Log 테이블 생성
-CREATE TABLE AUDIT_LOG (
-    log_id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    user_id BIGINT,
-    dept_id VARCHAR(50),
-    action_type VARCHAR(50) NOT NULL,
-    target_id BIGINT,
-    action_metadata JSON,
-    action_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES USER(user_id),
-    FOREIGN KEY (dept_id) REFERENCES DEPARTMENT(dept_id)
+-- Table structure for `content_analysis`
+DROP TABLE IF EXISTS `content_analysis`;
+CREATE TABLE `content_analysis` (
+  `analysis_id` BIGINT NOT NULL AUTO_INCREMENT,
+  `analyzed_at` DATETIME(6),
+  `post_id` BIGINT,
+  `analysis_detail` VARCHAR(255),
+  `content_type` VARCHAR(255),
+  `status` VARCHAR(255),
+  PRIMARY KEY (`analysis_id`),
+  UNIQUE KEY (`post_id`),
+  FOREIGN KEY (`post_id`) REFERENCES `post` (`post_id`)
 );
 
--- Model_Version 테이블 생성
-CREATE TABLE MODEL_VERSION (
-    model_id BIGINT PRIMARY KEY,
-    model_name VARCHAR(100) NOT NULL,
-    model_type VARCHAR(50),
-    version VARCHAR(20),
-    model_metadata JSON,
-    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- Table structure for `hate_category`
+DROP TABLE IF EXISTS `hate_category`;
+CREATE TABLE `hate_category` (
+  `category_id` BIGINT NOT NULL,
+  `severity_level` BIGINT,
+  `category_name` VARCHAR(255),
+  `description` VARCHAR(255),
+  PRIMARY KEY (`category_id`)
 );
 
--- Board_Department 테이블 생성 (다대다 관계)
-CREATE TABLE BOARD_DEPARTMENT (
-    board_dept_id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    board_id BIGINT,
-    dept_id VARCHAR(50),
-    FOREIGN KEY (board_id) REFERENCES BOARD(board_id),
-    FOREIGN KEY (dept_id) REFERENCES DEPARTMENT(dept_id)
+-- Table structure for `analysis_category_result`
+DROP TABLE IF EXISTS `analysis_category_result`;
+CREATE TABLE `analysis_category_result` (
+  `category_score` FLOAT,
+  `analysis_id` BIGINT,
+  `category_id` BIGINT,
+  `result_id` BIGINT NOT NULL AUTO_INCREMENT,
+  `detection_metadata` VARCHAR(255),
+  PRIMARY KEY (`result_id`),
+  FOREIGN KEY (`analysis_id`) REFERENCES `content_analysis` (`analysis_id`),
+  FOREIGN KEY (`category_id`) REFERENCES `hate_category` (`category_id`)
 );
 
--- Content_Analysis 테이블 생성
-CREATE TABLE CONTENT_ANALYSIS (
-    analysis_id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    post_id BIGINT,
-    content_type VARCHAR(50),
-    analysis_detail TEXT,
-    analyzed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(20),
-    FOREIGN KEY (post_id) REFERENCES POST(post_id)
+-- Table structure for `audit_log`
+DROP TABLE IF EXISTS `audit_log`;
+CREATE TABLE `audit_log` (
+  `action_time` DATETIME(6),
+  `log_id` BIGINT NOT NULL AUTO_INCREMENT,
+  `target_id` BIGINT,
+  `user_id` BIGINT,
+  `action_metadata` VARCHAR(255),
+  `action_type` VARCHAR(255),
+  `dept_id` VARCHAR(255),
+  PRIMARY KEY (`log_id`),
+  FOREIGN KEY (`dept_id`) REFERENCES `department` (`dept_id`),
+  FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`)
 );
-
--- Hate_Category 테이블 생성
-CREATE TABLE HATE_CATEGORY (
-    category_id BIGINT PRIMARY KEY,
-    category_name VARCHAR(100) NOT NULL,
-    description TEXT,
-    severity_level BIGINT,
-    UNIQUE (category_name)
-);
-
--- Analysis_Category_Result 테이블 생성
-CREATE TABLE ANALYSIS_CATEGORY_RESULT (
-    result_id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    analysis_id BIGINT,
-    category_id BIGINT,
-    category_score FLOAT,
-    detection_metadata JSON,
-    FOREIGN KEY (analysis_id) REFERENCES CONTENT_ANALYSIS(analysis_id),
-    FOREIGN KEY (category_id) REFERENCES HATE_CATEGORY(category_id)
-);
-
--- 인덱스 생성
-CREATE INDEX idx_user_email ON USER(email);
-CREATE INDEX idx_user_dept ON USER(dept_id);
-CREATE INDEX idx_post_board ON POST(board_id);
-CREATE INDEX idx_audit_user ON AUDIT_LOG(user_id);
-CREATE INDEX idx_audit_dept ON AUDIT_LOG(dept_id);
-CREATE INDEX idx_content_analysis_post ON CONTENT_ANALYSIS(post_id);
-CREATE INDEX idx_analysis_result_analysis ON ANALYSIS_CATEGORY_RESULT(analysis_id);
-CREATE INDEX idx_analysis_result_category ON ANALYSIS_CATEGORY_RESULT(category_id);
-
-
-
-
-
-
-
-
-
-
--- 미완성 테이블 --
-
-
--- Role 테이블 생성*******************************************************
-CREATE TABLE ROLE (
-    role_id BIGINT PRIMARY KEY,
-    role_name VARCHAR(50) NOT NULL,
-    UNIQUE (role_name)
-);
-
--- Permission 테이블 생성
-CREATE TABLE PERMISSION (
-    permission_id BIGINT PRIMARY KEY,
-    permission_name VARCHAR(100) NOT NULL,
-    resource_type VARCHAR(50),
-    UNIQUE (permission_name)
-);
-
--- User_Role 테이블 생성 (다대다 관계)
-CREATE TABLE USER_ROLE (
-    user_role_id BIGINT PRIMARY KEY,
-    user_id BIGINT,
-    role_id BIGINT,
-    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES USER(user_id),
-    FOREIGN KEY (role_id) REFERENCES ROLE(role_id),
-    UNIQUE (user_id, role_id)
-);
-
--- Role_Permission 테이블 생성 (다대다 관계)
-CREATE TABLE ROLE_PERMISSION (
-    role_permission_id BIGINT PRIMARY KEY,
-    role_id BIGINT,
-    permission_id BIGINT,
-    permission_name VARCHAR(50),
-    granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (role_id) REFERENCES ROLE(role_id),
-    FOREIGN KEY (permission_id) REFERENCES PERMISSION(permission_id),
-    UNIQUE (role_id, permission_id)
-);
-
-
