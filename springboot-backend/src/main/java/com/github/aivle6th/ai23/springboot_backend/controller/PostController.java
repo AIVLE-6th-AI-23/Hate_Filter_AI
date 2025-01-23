@@ -30,7 +30,6 @@ public class PostController {
         @RequestParam(defaultValue = "10") int size
     ){
         List<PostResponseDto> posts = postService.getPostByBoard(boardId, cursor, size);
-        // if(posts.isEmpty()) return ResponseEntity.notFound().build(); //없을 때는 어떻게 처리하지?
         return ResponseEntity.ok(new ApiResponseDto<>(true, "Post 목록 조회 성공",posts));
     }
 

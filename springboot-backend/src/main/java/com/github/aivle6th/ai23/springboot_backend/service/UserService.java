@@ -3,39 +3,48 @@ package com.github.aivle6th.ai23.springboot_backend.service;
 import com.github.aivle6th.ai23.springboot_backend.dto.UserSignupRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import com.github.aivle6th.ai23.springboot_backend.repository.UserRepository;
+
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
-   private final UserRepository userRepository;
-   private final PasswordEncoder passwordEncoder;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-   @Transactional
-public String signup(UserSignupRequestDto requestDto) {
-    Optional<User> existingUser = userRepository.findByEmployeeId(requestDto.getEmployeeId());
+    @Transactional
+    public String signup(UserSignupRequestDto requestDto) {
+        if (userRepository.existsByEmployeeId(requestDto.getEmployeeId())) {
+            throw new IllegalArgumentException("User already exists");
+        }
     
-    if (existingUser.isPresent()) {
-        User user = existingUser.get();
-        user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
-        userRepository.save(user);
-        return "User updated successfully";
-    } else {
         User newUser = requestDto.toEntity();
         newUser.setPassword(passwordEncoder.encode(requestDto.getPassword()));
         userRepository.save(newUser);
         return "User created successfully";
     }
-}
+
+    @Transactional
+    public String updateUserInfo(UserSignupRequestDto requestDto) {
+        User user = userRepository.findByEmployeeId(requestDto.getEmployeeId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // 필드 업데이트: 요청에 포함된 값만 변경
+        if (requestDto.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
+        }
+        if (requestDto.getEmail() != null) {
+            user.setEmail(requestDto.getEmail());
+        }
+
+        userRepository.save(user);
+        return "User information updated successfully";
+    }
 
     /**
      * Employee ID를 기반으로 User의 dept_id를 반환하는 메서드
@@ -51,15 +60,10 @@ public String signup(UserSignupRequestDto requestDto) {
                 .orElseThrow(() -> new IllegalArgumentException("User not found with employeeId: " + employeeId));
     }
 
-   public User login(String employeeId, String password) {
-       try {
-            User user = userRepository.findByEmployeeId(employeeId)
-                        .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-            user.updateLastLogin(LocalDateTime.now());
-            return user;
-       } catch (AuthenticationException e) {
-           return null;
-       }
-   }
+    public void updateUserActiveStatus(String employeeId, boolean isActive) {
+        User user = userRepository.findByEmployeeId(employeeId)
+                                .orElseThrow(() -> new EntityNotFoundException("User not found with employeeId : " + employeeId));
+        user.setIsActive(isActive);
+    }
 }
 

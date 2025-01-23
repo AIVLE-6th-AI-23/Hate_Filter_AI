@@ -4,20 +4,37 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+
+import com.github.aivle6th.ai23.springboot_backend.service.CustomUserDetailsService;
+import com.github.aivle6th.ai23.springboot_backend.service.UserService;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig{
+    private CustomUserDetailsService customUserDetailsService;
+    private UserService userService;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 
     @Bean
@@ -31,46 +48,47 @@ public class SecurityConfig{
             // 관리자 경로
             .requestMatchers("/admin/**").hasRole("ADMIN")
 
+            // Board, Post 경로(인증 필요)
             .requestMatchers("/api/boards/**", "/api/**/posts/**").authenticated()
-            .anyRequest().permitAll()
 
-            // // 프로젝트 경로 - 동적 권한 확인
-            // .requestMatchers("/api/boards/{boardId}/**").access((authentication, request) -> {
-            //     Long boardId = (Long) request.getRequest().getAttribute("boardId");
-            //     if (boardId == null) {
-            //         return new AuthorizationDecision(false);
-            //     }
-            //     boolean hasAccess = securityService.canAccessBoard(authentication.get(), boardId);
-            //     return new AuthorizationDecision(hasAccess);
-            // })
-
-            // // 게시글 경로 - 동적 권한 확인
-            // .requestMatchers("/api/{boardId}/posts/{postId}/**").access((authentication, request) -> {
-                
-            //     Long postId = (Long) request.getRequest().getAttribute("postId");
-            //     if (postId == null) {
-            //         return new AuthorizationDecision(false);
-            //     }
-            //     boolean hasAccess = securityService.canAccessPost(authentication.get(), postId);
-            //     return new AuthorizationDecision(hasAccess);
-            // })
-
-            // 그 외 모든 요청은 인증 필요
+            // 이 외의 경로(인증 필요)
             .anyRequest().authenticated()
         )
         .formLogin(form -> form
-            .loginPage("/login") // 커스텀 로그인 페이지
-            .defaultSuccessUrl("/dashboard", true) // 로그인 성공 시 리다이렉트 경로
-            .failureUrl("/login?error=true") // 로그인 실패 시 리다이렉트 경로
+            .loginProcessingUrl("/api/user/login")
+            .successHandler(new CustomAuthenticationSuccessHandler())
+            .failureHandler(new CustomAuthenticationFailureHandler())
             .permitAll()
-        ) // formlogin -> spring mvc 와 관련성??
+        )
         .logout(logout -> logout
-            .logoutUrl("/logout") // 로그아웃 URL
-            .logoutSuccessUrl("/login?logout=true") // 로그아웃 성공 시 리다이렉트 경로
+            .logoutUrl("/api/user/logout") // 로그아웃 URL
+            .invalidateHttpSession(true) // 세션 무효화
+            .deleteCookies("JSESSIONID") // 쿠키 삭제
+            .addLogoutHandler((request, response, authentication) -> {
+                if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+                    String username = ((UserDetails) authentication.getPrincipal()).getUsername();
+                    userService.updateUserActiveStatus(username, false);
+                }
+            })
+            .logoutSuccessHandler((request, response, authentication) -> {
+                response.setContentType("application/json");
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.getWriter().write("{\"message\": \"Logout successful\"}");
+            })
             .permitAll()
+        )
+        .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // 세션 생성 활성화(기본 설정)
         );
 
-
         return http.build();
+    }
+
+    @Bean
+    public DaoAuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(customUserDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
     }
 }
