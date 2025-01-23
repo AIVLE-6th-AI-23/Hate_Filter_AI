@@ -50,7 +50,7 @@ public class User {
     @OneToMany(mappedBy = "user")
     private List<Post> posts = new ArrayList<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "USER_ROLE",
         joinColumns = @JoinColumn(name = "user_id"),

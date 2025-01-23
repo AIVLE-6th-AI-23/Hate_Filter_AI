@@ -11,12 +11,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 import com.github.aivle6th.ai23.springboot_backend.service.CustomUserDetailsService;
-import com.github.aivle6th.ai23.springboot_backend.service.UserService;
+import com.github.aivle6th.ai23.springboot_backend.util.UserStatusManager;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -24,13 +22,11 @@ import jakarta.servlet.http.HttpServletResponse;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig{
-    private CustomUserDetailsService customUserDetailsService;
-    private UserService userService;
-
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    private final CustomUserDetailsService customUserDetailsService;
+    private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
+    private final CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
+    private final UserStatusManager userStatusManager;
+    private final PasswordEncoderConfig passwordEncoderConfig;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
@@ -43,21 +39,24 @@ public class SecurityConfig{
         .csrf(csrf ->csrf.disable())
         .authorizeHttpRequests(auth -> auth
             // 공개 경로 허용
-            .requestMatchers("/login", "/signup").permitAll()
+            .requestMatchers("/login", "/api/user/signup").permitAll()
 
             // 관리자 경로
             .requestMatchers("/admin/**").hasRole("ADMIN")
 
             // Board, Post 경로(인증 필요)
-            .requestMatchers("/api/boards/**", "/api/**/posts/**").authenticated()
+            .requestMatchers("/api/**").authenticated()
+
+            // Swagger 경로
+            .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
 
             // 이 외의 경로(인증 필요)
             .anyRequest().authenticated()
         )
         .formLogin(form -> form
             .loginProcessingUrl("/api/user/login")
-            .successHandler(new CustomAuthenticationSuccessHandler())
-            .failureHandler(new CustomAuthenticationFailureHandler())
+            .successHandler(customAuthenticationSuccessHandler)
+            .failureHandler(customAuthenticationFailureHandler)
             .permitAll()
         )
         .logout(logout -> logout
@@ -67,7 +66,7 @@ public class SecurityConfig{
             .addLogoutHandler((request, response, authentication) -> {
                 if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
                     String username = ((UserDetails) authentication.getPrincipal()).getUsername();
-                    userService.updateUserActiveStatus(username, false);
+                    userStatusManager.deactivateUser(username);
                 }
             })
             .logoutSuccessHandler((request, response, authentication) -> {
@@ -88,7 +87,7 @@ public class SecurityConfig{
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(customUserDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
+        authProvider.setPasswordEncoder(passwordEncoderConfig.passwordEncoder());
         return authProvider;
     }
 }
