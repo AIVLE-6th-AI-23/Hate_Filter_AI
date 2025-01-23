@@ -11,10 +11,10 @@ CREATE TABLE `department` (
 -- Table structure for `user`
 DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
+  `user_id` BIGINT NOT NULL AUTO_INCREMENT,
   `is_active` BIT(1),
   `created_at` DATETIME(6),
   `last_login` DATETIME(6),
-  `user_id` BIGINT NOT NULL AUTO_INCREMENT,
   `dept_id` VARCHAR(255),
   `email` VARCHAR(255),
   `employee_id` VARCHAR(255),
@@ -27,8 +27,8 @@ CREATE TABLE `user` (
 -- Table structure for `board`
 DROP TABLE IF EXISTS `board`;
 CREATE TABLE `board` (
-  `is_public` BIT(1),
   `board_id` BIGINT NOT NULL AUTO_INCREMENT,
+  `is_public` BIT(1),
   `created_at` DATETIME(6),
   `end_date` DATETIME(6),
   `board_title` VARCHAR(255),
@@ -39,10 +39,10 @@ CREATE TABLE `board` (
 -- Table structure for `post`
 DROP TABLE IF EXISTS `post`;
 CREATE TABLE `post` (
+  `post_id` BIGINT NOT NULL AUTO_INCREMENT,
   `board_id` BIGINT,
   `created_at` DATETIME(6),
   `modified_at` DATETIME(6),
-  `post_id` BIGINT NOT NULL AUTO_INCREMENT,
   `user_id` BIGINT,
   `view_count` BIGINT,
   `description` VARCHAR(255),
@@ -69,7 +69,7 @@ CREATE TABLE `content_analysis` (
 -- Table structure for `hate_category`
 DROP TABLE IF EXISTS `hate_category`;
 CREATE TABLE `hate_category` (
-  `category_id` BIGINT NOT NULL,
+  `category_id` BIGINT NOT NULL AUTO_INCREMENT,
   `severity_level` BIGINT,
   `category_name` VARCHAR(255),
   `description` VARCHAR(255),
@@ -79,10 +79,10 @@ CREATE TABLE `hate_category` (
 -- Table structure for `analysis_category_result`
 DROP TABLE IF EXISTS `analysis_category_result`;
 CREATE TABLE `analysis_category_result` (
+  `result_id` BIGINT NOT NULL AUTO_INCREMENT,
   `category_score` FLOAT,
   `analysis_id` BIGINT,
   `category_id` BIGINT,
-  `result_id` BIGINT NOT NULL AUTO_INCREMENT,
   `detection_metadata` VARCHAR(255),
   PRIMARY KEY (`result_id`),
   FOREIGN KEY (`analysis_id`) REFERENCES `content_analysis` (`analysis_id`),
@@ -92,8 +92,8 @@ CREATE TABLE `analysis_category_result` (
 -- Table structure for `audit_log`
 DROP TABLE IF EXISTS `audit_log`;
 CREATE TABLE `audit_log` (
-  `action_time` DATETIME(6),
   `log_id` BIGINT NOT NULL AUTO_INCREMENT,
+  `action_time` DATETIME(6),
   `target_id` BIGINT,
   `user_id` BIGINT,
   `action_metadata` VARCHAR(255),
@@ -101,5 +101,23 @@ CREATE TABLE `audit_log` (
   `dept_id` VARCHAR(255),
   PRIMARY KEY (`log_id`),
   FOREIGN KEY (`dept_id`) REFERENCES `department` (`dept_id`),
+  FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`)
+);
+
+-- Table structure for `role`
+DROP TABLE IF EXISTS `role`;
+CREATE TABLE `role` (
+  `role_id` BIGINT NOT NULL AUTO_INCREMENT,
+  `role_name` VARCHAR(255),
+  PRIMARY KEY (`role_id`)
+);
+
+-- Table structure for `user_role`
+DROP TABLE IF EXISTS `user_role`;
+CREATE TABLE `user_role` (
+  `role_id` BIGINT NOT NULL,
+  `user_id` BIGINT NOT NULL,
+  PRIMARY KEY (`role_id`, `user_id`),
+  FOREIGN KEY (`role_id`) REFERENCES `role` (`role_id`),
   FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`)
 );
