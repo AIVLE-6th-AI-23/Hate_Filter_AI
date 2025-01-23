@@ -37,6 +37,7 @@ public class ContentAnalysis {
     private Post post;
 
     @OneToMany(mappedBy = "contentAnalysis" ,cascade = CascadeType.ALL)
+    @Builder.Default
     private List<AnalysisCategoryResult> analysisCategoryResults = new ArrayList<>();
 
 }
