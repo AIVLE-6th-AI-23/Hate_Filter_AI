@@ -15,8 +15,8 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
 
     @Query("""
         SELECT b FROM Board b
-        JOIN b.boardDepartments bd
-        WHERE bd.department.id = :deptId
+        JOIN b.departments d
+        WHERE d.id = :deptId
         AND (:cursor IS NULL OR b.createdAt < :cursor)
         ORDER BY b.createdAt DESC
     """)
@@ -28,8 +28,8 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
 
     @Query("""
         SELECT b FROM Board b
-        JOIN b.boardDepartments bd
-        WHERE bd.department.id = :deptId
+        JOIN b.departments d
+        WHERE d.id = :deptId
         AND (:cursor IS NULL OR b.createdAt < :cursor)
         AND b.endDate IS NULL
         ORDER BY b.createdAt DESC
@@ -42,8 +42,8 @@ public interface BoardRepository extends JpaRepository<Board, Long> {
 
     @Query("""
         SELECT b FROM Board b
-        JOIN b.boardDepartments bd
-        WHERE bd.department.id = :deptId
+        JOIN b.departments d
+        WHERE d.id = :deptId
         AND (:cursor IS NULL OR b.createdAt < :cursor)
         AND b.endDate IS NOT NULL
         ORDER BY b.createdAt DESC
