@@ -6,6 +6,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -48,6 +49,14 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<Post> posts = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+        name = "USER_ROLE",
+        joinColumns = @JoinColumn(name = "user_id"),
+        inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    private Set<Role> roles;
 
     public void updateLastLogin(LocalDateTime lastLogin) {
         this.lastLogin = lastLogin;

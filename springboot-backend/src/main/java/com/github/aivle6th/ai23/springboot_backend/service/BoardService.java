@@ -2,9 +2,7 @@ package com.github.aivle6th.ai23.springboot_backend.service;
 
 import com.github.aivle6th.ai23.springboot_backend.dto.BoardCreateRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.entity.Board;
-import com.github.aivle6th.ai23.springboot_backend.entity.BoardDepartment;
 import com.github.aivle6th.ai23.springboot_backend.entity.Department;
-import com.github.aivle6th.ai23.springboot_backend.repository.BoardDepartmentRepository;
 import com.github.aivle6th.ai23.springboot_backend.repository.BoardRepository;
 import com.github.aivle6th.ai23.springboot_backend.repository.DepartmentRepository;
 
@@ -16,7 +14,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -24,21 +25,45 @@ import java.util.List;
 public class BoardService {
     private final BoardRepository boardRepository;
     private final DepartmentRepository departmentRepository;
-    private final BoardDepartmentRepository boardDepartmentRepository;
-    private final UserService userService;
 
-    public List<Board> getActiveBoardsByDepartment(String employeeId, LocalDateTime cursor, int size) {
-        String deptId = userService.getDeptIdByEmployeeId(employeeId);    
+    // 게시판 생성
+    public Board createBoard(BoardCreateRequestDto requestDto) {
+        Board board = Board.builder()
+                .boardTitle(requestDto.getBoardTitle())
+                .description(requestDto.getDescription())
+                .isPublic(requestDto.getIsPublic())
+                .endDate(requestDto.getEndDate())
+                .build();
+
+        if (requestDto.getDeptIds() != null && !requestDto.getDeptIds().isEmpty()) {
+            Set<Department> departments = new HashSet<>(departmentRepository.findAllById(requestDto.getDeptIds()));
+
+            List<String> missingIds = requestDto.getDeptIds().stream()
+                    .filter(id -> departments.stream().noneMatch(dept -> dept.getDeptId().equals(id)))
+                    .collect(Collectors.toList());
+
+            if (!missingIds.isEmpty()) {
+                throw new EntityNotFoundException("부서를 찾을 수 없습니다: " + String.join(", ", missingIds));
+            }
+
+            board.setDepartments(departments);
+        }
+
+        return boardRepository.save(board);
+    }
+
+    // 현재 진행 중인 게시판 부서별 조회
+    public List<Board> getActiveBoardsByDepartment(String deptId, LocalDateTime cursor, int size) {   
         return boardRepository.findActiveBoardsByDepartmentWithCursor(deptId, cursor, PageRequest.of(0, size));
     }
 
-    public List<Board> getCompletedBoardsByDepartment(String employeeId, LocalDateTime cursor, int size) {
-        String deptId = userService.getDeptIdByEmployeeId(employeeId);    
+    // 현재 완료된 게시판 부서별 조회
+    public List<Board> getCompletedBoardsByDepartment(String deptId, LocalDateTime cursor, int size) {   
         return boardRepository.findCompletedBoardsByDepartmentWithCursor(deptId, cursor, PageRequest.of(0, size));
     }
 
-    public List<Board> getBoardsByDepartment(String employeeId, LocalDateTime cursor, int size) {
-        String deptId = userService.getDeptIdByEmployeeId(employeeId);    
+    // 부서별 게시판 전체 조회
+    public List<Board> getBoardsByDepartment(String deptId, LocalDateTime cursor, int size) {  
         return boardRepository.findBoardsByDepartmentWithCursor(deptId, cursor, PageRequest.of(0, size));
     }
 
@@ -49,86 +74,46 @@ public class BoardService {
                 .orElseThrow(() -> new EntityNotFoundException("게시판을 찾을 수 없습니다: " + boardId));
     }
 
-    // 게시판 삭제
-    public void deleteBoard(Long boardId) {
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new EntityNotFoundException("게시판을 찾을 수 없습니다: " + boardId));
-
-        // 연관된 BoardDepartment 먼저 삭제
-        boardDepartmentRepository.deleteByBoard(board);
-
-        // Board 삭제
-        boardRepository.delete(board);
-    }
-
     // 전체 게시판 조회
     public List<Board> getAllBoards() {
         return boardRepository.findAll();
     }
 
-    // 게시판 생성
-    public Board createBoard(BoardCreateRequestDto request) {
-        // 1. Board 엔티티 생성
-        Board board = Board.builder()
-                .boardTitle(request.getBoardTitle())
-                .description(request.getDescription())
-                .isPublic(request.getIsPublic())
-                .endDate(request.getEndDate())
-                .build();
-
-        // 2. Board 저장
-        Board savedBoard = boardRepository.save(board);
-
-        // 3. BoardDepartment 관계 설정 및 저장
-        if (request.getDeptIds() != null && !request.getDeptIds().isEmpty()) {
-            for (String deptId : request.getDeptIds()) {
-                Department department = departmentRepository.findById(deptId)
-                        .orElseThrow(() -> new EntityNotFoundException("부서를 찾을 수 없습니다: " + deptId));
-
-                BoardDepartment boardDepartment = BoardDepartment.builder()
-                        .board(savedBoard)
-                        .department(department)
-                        .build();
-
-                boardDepartmentRepository.save(boardDepartment);
-            }
-        }
-
-        return savedBoard;
-    }
-
     // 게시판 수정
-    public Board updateBoard(Long boardId, BoardCreateRequestDto request) {
+    public Board updateBoard(Long boardId, BoardCreateRequestDto requestDto) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("게시판을 찾을 수 없습니다: " + boardId));
 
-        // 1. 게시판 정보 업데이트
         board.updateBoard(
-                request.getBoardTitle(),
-                request.getDescription(),
-                request.getIsPublic(),
-                request.getEndDate()
+            requestDto.getBoardTitle(),
+                requestDto.getDescription(),
+                requestDto.getIsPublic(),
+                requestDto.getEndDate()
         );
 
-        // 2. 기존 부서 연관관계 삭제
-        boardDepartmentRepository.deleteByBoard(board);
+        if (requestDto.getDeptIds() != null && !requestDto.getDeptIds().isEmpty()) {
+            Set<Department> departments = new HashSet<>(departmentRepository.findAllById(requestDto.getDeptIds()));
 
-        // 3. 새로운 부서 연관관계 설정
-        if (request.getDeptIds() != null && !request.getDeptIds().isEmpty()) {
-            for (String deptId : request.getDeptIds()) {
-                Department department = departmentRepository.findById(deptId)
-                        .orElseThrow(() -> new EntityNotFoundException("부서를 찾을 수 없습니다: " + deptId));
+            List<String> missingIds = requestDto.getDeptIds().stream()
+                    .filter(id -> departments.stream().noneMatch(dept -> dept.getDeptId().equals(id)))
+                    .collect(Collectors.toList());
 
-                BoardDepartment boardDepartment = BoardDepartment.builder()
-                        .board(board)
-                        .department(department)
-                        .build();
-
-                boardDepartmentRepository.save(boardDepartment);
+            if (!missingIds.isEmpty()) {
+                throw new EntityNotFoundException("부서를 찾을 수 없습니다: " + String.join(", ", missingIds));
             }
+
+            board.setDepartments(departments);
         }
 
         return boardRepository.save(board);
+    }
+
+    // 게시판 삭제
+    public void deleteBoard(Long boardId) {
+        if (!boardRepository.existsById(boardId)) {
+            throw new EntityNotFoundException("Board not found: " + boardId);
+        }
+        boardRepository.deleteById(boardId);
     }
 
 }

@@ -11,9 +11,12 @@ import com.github.aivle6th.ai23.springboot_backend.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,28 +27,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
-
-    /**
-     * 보드 ID에 맞는 POST 목록 전달 함수
-     * @param boardId
-     * @return List<PostResponseDto>
-     */
-    public List<PostResponseDto> getPostByBoard(Long boardId) {
-        List<Post> posts = postRepository.findByBoard_boardId(boardId);
-        return posts.stream()
-                .map(PostResponseDto::EntityToResponse)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * POST 상세 페이지
-     * @param postId
-     * @return PostResponseDto
-     */
-    public PostResponseDto getPostById(Long postId) {
-        Post post = postRepository.findByPostId(postId);
-        return PostResponseDto.EntityToResponse(post); // Entity -> ResponseDto 변환
-    }
+    //paging 처리 추가
 
     /**
      * POST 생성
@@ -69,6 +51,31 @@ public class PostService {
     }
 
     /**
+     * 보드 ID에 맞는 POST 목록 전달 함수
+     * @param boardId
+     * @param cursor
+     * @param size
+     * @return List<PostResponseDto>
+     */
+    public List<PostResponseDto> getPostByBoard(Long boardId, LocalDateTime cursor, int size) {
+        List<Post> posts = postRepository.findByBoardIdWithCursor(boardId, cursor, PageRequest.of(0, size));
+        return posts.stream()
+                .map(PostResponseDto::EntityToResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * POST 상세 페이지
+     * @param postId
+     * @return PostResponseDto
+     */
+    public PostResponseDto getPostById(Long postId) {
+        Post post = postRepository.findById(postId)
+                                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다: " + postId));
+        return PostResponseDto.EntityToResponse(post); // Entity -> ResponseDto 변환
+    }
+
+    /**
      * POST 수정
      * @param postId
      * @param postRequestDto
@@ -76,7 +83,8 @@ public class PostService {
      */
     public PostResponseDto updatePostById(Long postId, PostRequestDto postRequestDto) {
         // 1. 기존 post 찾기
-        Post post = postRepository.findById(postId).orElseThrow(()-> new EntityNotFoundException("Post not found"));
+        Post post = postRepository.findById(postId)
+                                .orElseThrow(()-> new EntityNotFoundException("게시글을 찾을 수 없습니다: " + postId));
 
         Post updatedPost = post.toBuilder()
                 .postTitle(postRequestDto.getPostTitle())
@@ -92,9 +100,9 @@ public class PostService {
      * @param postId
      * @return
      */
+    // 왜 void 지???
     @Transactional
     public void incrementViewCount(Long postId) {
-
         postRepository.increaseViewCount(postId);
     }
 

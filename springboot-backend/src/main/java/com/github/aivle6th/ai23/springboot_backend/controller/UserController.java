@@ -26,15 +26,15 @@ public class UserController {
         return ResponseEntity.ok(new ApiResponseDto<>(true, "회원가입 성공", response));
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<ApiResponseDto<UserLoginResponseDto>> login(@RequestBody UserLoginRequestDto loginRequestDto) {
-        User user = userService.login(loginRequestDto.getEmployeeId(), loginRequestDto.getPassword());
-        UserLoginResponseDto response = new UserLoginResponseDto(user);
-        return ResponseEntity.ok(new ApiResponseDto<>(true, "로그인 성공", response));
-    }
+    // @PostMapping("/login")
+    // public ResponseEntity<ApiResponseDto<UserLoginResponseDto>> login(@RequestBody UserLoginRequestDto loginRequestDto) {
+    //     User user = userService.login(loginRequestDto.getEmployeeId(), loginRequestDto.getPassword());
+    //     UserLoginResponseDto response = new UserLoginResponseDto(user);
+    //     return ResponseEntity.ok(new ApiResponseDto<>(true, "로그인 성공", response));
+    // }
 
-    @PostMapping("/logout")
-    public ResponseEntity<ApiResponseDto<String>> logout() {
-        return ResponseEntity.ok(new ApiResponseDto<>(true, "로그아웃 성공", "Logout successful"));
-    }
+    // @PostMapping("/logout")
+    // public ResponseEntity<ApiResponseDto<String>> logout() {
+    //     return ResponseEntity.ok(new ApiResponseDto<>(true, "로그아웃 성공", "Logout successful"));
+    // }
 }

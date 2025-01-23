@@ -43,7 +43,8 @@ public class ContentAnalysisService {
                                                  List<AnalysisCategoryResultRequestDto> analysisCategoryResultDtos,
                                                  Long postId) {
 
-        Post post = postRepository.findByPostId(postId);
+        Post post = postRepository.findById(postId)
+                                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다: " + postId));
         ContentAnalysis contentAnalysis = contentAnalysisRequestDto.toEntity(post);
 
         //분석카테고리 결과 dto에서 categoryId 들을조회

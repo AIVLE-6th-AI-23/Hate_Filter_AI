@@ -4,9 +4,6 @@ import com.github.aivle6th.ai23.springboot_backend.dto.UserSignupRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import com.github.aivle6th.ai23.springboot_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,7 +19,6 @@ public class UserService {
 
    private final UserRepository userRepository;
    private final PasswordEncoder passwordEncoder;
-   private final AuthenticationManager authenticationManager;
 
    @Transactional
 public String signup(UserSignupRequestDto requestDto) {
