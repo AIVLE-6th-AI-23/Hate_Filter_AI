@@ -8,7 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -35,8 +37,13 @@ public class Board {
     @Column(name = "end_date")
     private LocalDateTime endDate;
 
-    @OneToMany(mappedBy = "board", cascade = CascadeType.ALL)
-    private List<BoardDepartment> boardDepartments = new ArrayList<>();
+    @ManyToMany
+    @JoinTable(
+        name = "BOARD_DEPARTMENT",
+        joinColumns = @JoinColumn(name = "board_id"),
+        inverseJoinColumns = @JoinColumn(name = "dept_id")
+    )
+    private Set<Department> departments = new HashSet<>(); 
 
     @OneToMany(mappedBy = "board", cascade = CascadeType.ALL)
     private List<Post> posts = new ArrayList<>();
@@ -56,6 +63,11 @@ public class Board {
         this.description = description;
         this.isPublic = isPublic;
         this.endDate = endDate;
+    }
+
+    public void setDepartments(Set<Department> departments){
+        departments.stream()
+               .forEach(this.departments::add);
     }
 }
 

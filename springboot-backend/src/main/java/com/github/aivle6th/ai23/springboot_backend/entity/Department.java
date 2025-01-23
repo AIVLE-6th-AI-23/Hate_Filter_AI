@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -23,6 +25,6 @@ public class Department {
     @OneToMany(mappedBy = "department")
     private List<User> users = new ArrayList<>();
 
-    @OneToMany(mappedBy = "department")
-    private List<BoardDepartment> boardDepartments = new ArrayList<>();
+    @ManyToMany(mappedBy = "departments")
+    private Set<Board> boards = new HashSet<>();
 }
