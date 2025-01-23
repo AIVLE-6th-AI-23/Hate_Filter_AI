@@ -12,6 +12,9 @@ import com.github.aivle6th.ai23.springboot_backend.dto.ApiResponseDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.UserSignupRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.service.UserService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -19,19 +22,24 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
+@Tag(name = "User API", description = "사용자 관리 API")
 public class UserController {
     private final UserService userService;
 
+    @Operation(summary = "회원가입", description = "새로운 사용자를 회원가입 처리합니다.")
     @PostMapping("/signup")
-    public ResponseEntity<ApiResponseDto<String>> signup(@RequestBody UserSignupRequestDto user) {
+    public ResponseEntity<ApiResponseDto<String>> signup(
+            @Parameter(description = "회원가입 요청 데이터", required = true) @RequestBody UserSignupRequestDto user) {
         String response = userService.signup(user);
         return ResponseEntity.ok(new ApiResponseDto<>(true, "회원가입 성공", response));
     }
 
-    @PostMapping("/update") // 비밀 번호 변경 시 세션 재요구
-    public ResponseEntity<ApiResponseDto<String>> update(@RequestBody UserSignupRequestDto user,
-                                                        HttpServletRequest request,
-                                                        HttpServletResponse response) {
+    @Operation(summary = "회원 정보 수정", description = "사용자 정보를 수정하고 비밀번호 변경 시 세션을 무효화합니다.")
+    @PostMapping("/update")
+    public ResponseEntity<ApiResponseDto<String>> update(
+            @Parameter(description = "회원 정보 수정 요청 데이터", required = true) @RequestBody UserSignupRequestDto user,
+            HttpServletRequest request,
+            HttpServletResponse response) {
         try {
             // 비밀번호 업데이트 로직
             String updateResponse = userService.updateUserInfo(user);
@@ -45,6 +53,4 @@ public class UserController {
             return ResponseEntity.badRequest().body(new ApiResponseDto<>(false, e.getMessage(), null));
         }
     }
-
-    
 }

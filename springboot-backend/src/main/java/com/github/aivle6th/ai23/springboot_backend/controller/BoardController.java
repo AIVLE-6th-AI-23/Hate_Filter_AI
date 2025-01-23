@@ -7,11 +7,19 @@ import com.github.aivle6th.ai23.springboot_backend.entity.Board;
 import com.github.aivle6th.ai23.springboot_backend.service.BoardService;
 import com.github.aivle6th.ai23.springboot_backend.service.UserService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -22,20 +30,28 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/boards")
 @RequiredArgsConstructor
+@Tag(name = "Board API", description = "게시판 관리 API")
 public class BoardController {
     private final BoardService boardService;
     private final UserService userService;
 
-    @GetMapping("") // 수정 필 - 쿠키에서 받아와서 처리 - 현재 유저의 부서에 따른 조회...
+    @Operation(summary = "게시판 조회", description = "현재 로그인한 사용자의 부서에 따라 게시판 목록을 조회합니다.")
+    @GetMapping("")
     public ResponseEntity<ApiResponseDto<List<BoardResponseDto>>> getBoards(
-        @PathVariable String employeeId,
-        @RequestParam(required = false) LocalDateTime cursor,
-        @RequestParam(defaultValue = "10") int size,
-        @RequestParam(defaultValue = "active") String status
+            @Parameter(description = "페이징 커서 (생성일시 기준)") @RequestParam(required = false) LocalDateTime cursor,
+            @Parameter(description = "페이지 크기 (기본값: 10)") @RequestParam(defaultValue = "10") int size,
+            @Parameter(description = "게시판 상태 (active, completed)") @RequestParam(defaultValue = "active") String status
     ) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponseDto<>(false, "Unauthorized access", null));
+        }
+
+        String employeeId = ((UserDetails) authentication.getPrincipal()).getUsername();
         String deptId = userService.getDeptIdByEmployeeId(employeeId);
-        List<Board> boards = "active".equalsIgnoreCase(status)     ?  boardService.getActiveBoardsByDepartment(deptId, cursor, size) : 
-                             "completed".equalsIgnoreCase(status)  ?  boardService.getCompletedBoardsByDepartment(deptId, cursor, size) : 
+        List<Board> boards = "active".equalsIgnoreCase(status)     ? boardService.getActiveBoardsByDepartment(deptId, cursor, size) : 
+                             "completed".equalsIgnoreCase(status)  ? boardService.getCompletedBoardsByDepartment(deptId, cursor, size) : 
                                                                       boardService.getBoardsByDepartment(deptId, cursor, size);
         List<BoardResponseDto> boardDtos = boards.stream()
                 .map(BoardResponseDto::from)
@@ -43,6 +59,7 @@ public class BoardController {
         return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 조회 성공", boardDtos));
     }
 
+    @Operation(summary = "게시판 생성", description = "새로운 게시판을 생성합니다. 관리자 또는 매니저 권한이 필요합니다.")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     @PostMapping("/create")
     public ResponseEntity<ApiResponseDto<BoardResponseDto>> createBoard(@RequestBody BoardCreateRequestDto request) {
@@ -50,12 +67,13 @@ public class BoardController {
             Board savedBoard = boardService.createBoard(request);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 생성 성공", BoardResponseDto.from(savedBoard)));
         } catch (Exception e) {
-            log.error("게시판 생성 실패: ", e);  // 로그 추가
+            log.error("게시판 생성 실패: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponseDto<>(false, "게시판 생성 실패: " + e.getMessage(), null));
         }
     }
 
+    @Operation(summary = "게시판 상세 조회", description = "특정 게시판의 상세 정보를 조회합니다.")
     @PreAuthorize("@securityService.canAccessBoard(authentication, #boardId)")
     @GetMapping("/{boardId}/detail")
     public ResponseEntity<ApiResponseDto<BoardResponseDto>> getBoardById(@PathVariable Long boardId) {
@@ -63,6 +81,7 @@ public class BoardController {
         return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 조회 성공", BoardResponseDto.from(board)));
     }
 
+    @Operation(summary = "게시판 수정", description = "특정 게시판의 내용을 수정합니다. 관리자 또는 매니저 권한이 필요합니다.")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN') and @securityService.canAccessBoard(authentication, #boardId)")
     @PutMapping("/{boardId}")
     public ResponseEntity<ApiResponseDto<BoardResponseDto>> updateBoard(
@@ -72,6 +91,7 @@ public class BoardController {
         return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 수정 성공", BoardResponseDto.from(updatedBoard)));
     }
 
+    @Operation(summary = "게시판 삭제", description = "특정 게시판을 삭제합니다. 관리자 또는 매니저 권한이 필요합니다.")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN') and @securityService.canAccessBoard(authentication, #boardId)")
     @DeleteMapping("/{boardId}")
     public ResponseEntity<ApiResponseDto<Void>> deleteBoard(@PathVariable Long boardId) {
