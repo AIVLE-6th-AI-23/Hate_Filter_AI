@@ -12,6 +12,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.github.aivle6th.ai23.springboot_backend.service.CustomUserDetailsService;
 import com.github.aivle6th.ai23.springboot_backend.util.UserStatusManager;
@@ -23,8 +26,6 @@ import jakarta.servlet.http.HttpServletResponse;
 @RequiredArgsConstructor
 public class SecurityConfig{
     private final CustomUserDetailsService customUserDetailsService;
-    private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
-    private final CustomAuthenticationFailureHandler customAuthenticationFailureHandler;
     private final UserStatusManager userStatusManager;
     private final PasswordEncoderConfig passwordEncoderConfig;
 
@@ -37,27 +38,22 @@ public class SecurityConfig{
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
         .csrf(csrf ->csrf.disable())
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(auth -> auth
-            // 공개 경로 허용
-            .requestMatchers("/login", "/api/user/signup").permitAll()
-
             // 관리자 경로
             .requestMatchers("/admin/**").hasRole("ADMIN")
 
             // Board, Post 경로(인증 필요)
             .requestMatchers("/api/**").authenticated()
 
+            // 공개 경로 허용
+            .requestMatchers("api/user/login", "/api/user/signup").permitAll()
+
             // Swagger 경로
             .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
 
             // 이 외의 경로(인증 필요)
             .anyRequest().authenticated()
-        )
-        .formLogin(form -> form
-            .loginProcessingUrl("/api/user/login")
-            .successHandler(customAuthenticationSuccessHandler)
-            .failureHandler(customAuthenticationFailureHandler)
-            .permitAll()
         )
         .logout(logout -> logout
             .logoutUrl("/api/user/logout") // 로그아웃 URL
@@ -89,5 +85,18 @@ public class SecurityConfig{
         authProvider.setUserDetailsService(customUserDetailsService);
         authProvider.setPasswordEncoder(passwordEncoderConfig.passwordEncoder());
         return authProvider;
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.addAllowedOrigin("http://localhost:3000"); // 허용할 클라이언트 도메인
+        configuration.addAllowedMethod("*"); // 모든 HTTP 메서드 허용
+        configuration.addAllowedHeader("*"); // 모든 헤더 허용
+        configuration.setAllowCredentials(true); // 쿠키 전송 허용
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration); // 모든 경로에 대해 CORS 적용
+        return source;
     }
 }
