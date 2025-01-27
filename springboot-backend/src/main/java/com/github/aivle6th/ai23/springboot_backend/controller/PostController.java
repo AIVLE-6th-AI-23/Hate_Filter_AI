@@ -10,8 +10,13 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -53,13 +58,21 @@ public class PostController {
     public ResponseEntity<ApiResponseDto<PostResponseDto>> create(
             @RequestBody PostRequestDto postRequestDto,
             @Parameter(description = "게시판 ID", required = true) @PathVariable Long boardId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(new ApiResponseDto<>(false, "Unauthorized access", null));
+        }
+
+        String employeeId = ((UserDetails) authentication.getPrincipal()).getUsername();
+        
         postRequestDto = postRequestDto.toBuilder()
                 .boardId(boardId)
                 .build();
 
         log.info("Updated PostRequestDto with boardId: {}", postRequestDto);
 
-        PostResponseDto createdPost = postService.createPost(postRequestDto);
+        PostResponseDto createdPost = postService.createPost(employeeId, postRequestDto);
         return ResponseEntity.ok(new ApiResponseDto<>(true, "Post 생성 성공", createdPost));
     }
 

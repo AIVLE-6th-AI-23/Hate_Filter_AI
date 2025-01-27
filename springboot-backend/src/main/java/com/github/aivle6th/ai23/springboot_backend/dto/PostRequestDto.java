@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 public class PostRequestDto {
 
     private final Long boardId;
-    private final Long userId;
     private final String postTitle;
     private final String description;
 

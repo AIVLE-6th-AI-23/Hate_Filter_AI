@@ -34,12 +34,12 @@ public class PostService {
      * @param postRequestDto
      * @return 생성한 postId 일단 id만, 생성한거 잘 들어갔는지 전부 다 보고 싶으면 post로 내놓기
      */
-    public PostResponseDto createPost(PostRequestDto postRequestDto) {
+    public PostResponseDto createPost(String employeeId, PostRequestDto postRequestDto) {
 
         Board board = boardRepository.findById(postRequestDto.getBoardId())
                 .orElseThrow(()-> new EntityNotFoundException("Board not found"));
 
-        User user = userRepository.findById(postRequestDto.getUserId())
+        User user = userRepository.findByEmployeeId(employeeId)
                 .orElseThrow(()-> new EntityNotFoundException("User not found"));
 
         // RequestDto -> Entity 변환
