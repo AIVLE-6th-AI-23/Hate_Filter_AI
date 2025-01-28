@@ -24,7 +24,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/{boardId}/posts")
+@RequestMapping("/api/{boardId:\\d+}/posts")
 @RequiredArgsConstructor
 @Tag(name = "Post API", description = "게시물 관리 API")
 public class PostController {
@@ -36,8 +36,8 @@ public class PostController {
     @GetMapping("")
     public ResponseEntity<ApiResponseDto<List<PostResponseDto>>> getPostByBoardId(
             @Parameter(description = "게시판 ID", required = true) @PathVariable Long boardId,
-            @Parameter(description = "페이징 커서 (등록일 기준)") @RequestParam(required = false) LocalDateTime cursor,
-            @Parameter(description = "페이지 크기 (기본값: 10)") @RequestParam(defaultValue = "10") int size
+            @Parameter(description = "페이징 커서 (등록일 기준)") @RequestParam(name = "cursor", required = false) LocalDateTime cursor,
+            @Parameter(description = "페이지 크기 (기본값: 10)") @RequestParam(name = "size", defaultValue = "10") int size
     ) {
         List<PostResponseDto> posts = postService.getPostByBoard(boardId, cursor, size);
         return ResponseEntity.ok(new ApiResponseDto<>(true, "Post 목록 조회 성공", posts));
@@ -45,7 +45,7 @@ public class PostController {
 
     @Operation(summary = "게시물 상세 조회", description = "특정 게시물의 상세 정보를 조회합니다.")
     @PreAuthorize("@securityService.canAccessPost(authentication, #postId)")
-    @GetMapping("/{postId}")
+    @GetMapping("/{postId:\\d+}")
     public ResponseEntity<ApiResponseDto<PostResponseDto>> details(
             @Parameter(description = "게시물 ID", required = true) @PathVariable Long postId) {
         PostResponseDto post = postService.getPostById(postId);
@@ -78,7 +78,7 @@ public class PostController {
 
     @Operation(summary = "게시물 수정", description = "특정 게시물의 내용을 수정합니다.")
     @PreAuthorize("@securityService.canAccessPost(authentication, #postId)")
-    @PutMapping("/{postId}")
+    @PutMapping("/{postId:\\d+}")
     public ResponseEntity<ApiResponseDto<PostResponseDto>> updatePost(
             @Parameter(description = "게시물 ID", required = true) @PathVariable Long postId,
             @RequestBody PostRequestDto postRequestDto) {
@@ -88,7 +88,7 @@ public class PostController {
 
     @Operation(summary = "게시물 조회수 증가", description = "특정 게시물의 조회수를 증가시킵니다.")
     @PreAuthorize("@securityService.canAccessPost(authentication, #postId)")
-    @PatchMapping("/{postId}")
+    @PatchMapping("/{postId:\\d+}")
     public ResponseEntity<ApiResponseDto<Void>> increaseViewCount(
             @Parameter(description = "게시물 ID", required = true) @PathVariable Long postId) {
         postService.incrementViewCount(postId);
@@ -97,7 +97,7 @@ public class PostController {
 
     @Operation(summary = "게시물 삭제", description = "특정 게시물을 삭제합니다.")
     @PreAuthorize("@securityService.canAccessPost(authentication, #postId)")
-    @DeleteMapping("/{postId}")
+    @DeleteMapping("/{postId:\\d+}")
     public ResponseEntity<ApiResponseDto<Void>> deletePost(
             @Parameter(description = "게시물 ID", required = true) @PathVariable Long postId) {
         postService.deletePostById(postId);

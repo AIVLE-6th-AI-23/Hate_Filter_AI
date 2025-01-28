@@ -38,26 +38,35 @@ public class BoardController {
     @Operation(summary = "게시판 조회", description = "현재 로그인한 사용자의 부서에 따라 게시판 목록을 조회합니다.")
     @GetMapping("")
     public ResponseEntity<ApiResponseDto<List<BoardResponseDto>>> getBoards(
-            @Parameter(description = "페이징 커서 (생성일시 기준)") @RequestParam(required = false) LocalDateTime cursor,
-            @Parameter(description = "페이지 크기 (기본값: 10)") @RequestParam(defaultValue = "10") int size,
-            @Parameter(description = "게시판 상태 (active, completed)") @RequestParam(defaultValue = "active") String status
+            @Parameter(description = "페이징 커서 (생성일시 기준)") @RequestParam(name = "cursor", required = false) LocalDateTime cursor,
+            @Parameter(description = "페이지 크기 (기본값: 10)") @RequestParam(name = "size", defaultValue = "10") int size,
+            @Parameter(description = "게시판 상태 (active, completed, all)") @RequestParam(name = "status", defaultValue = "active") String status
     ) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(new ApiResponseDto<>(false, "Unauthorized access", null));
-        }
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(new ApiResponseDto<>(false, "Unauthorized access", null));
+            }
 
-        String employeeId = ((UserDetails) authentication.getPrincipal()).getUsername();
-        String deptId = userService.getDeptIdByEmployeeId(employeeId);
-        List<Board> boards = "active".equalsIgnoreCase(status)     ? boardService.getActiveBoardsByDepartment(deptId, cursor, size) : 
-                             "completed".equalsIgnoreCase(status)  ? boardService.getCompletedBoardsByDepartment(deptId, cursor, size) : 
-                                                                      boardService.getBoardsByDepartment(deptId, cursor, size);
-        List<BoardResponseDto> boardDtos = boards.stream()
-                .map(BoardResponseDto::from)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 조회 성공", boardDtos));
+            String employeeId = ((UserDetails) authentication.getPrincipal()).getUsername();
+            String deptId = userService.getDeptIdByEmployeeId(employeeId);
+            List<Board> boards = "active".equalsIgnoreCase(status)     ? boardService.getActiveBoardsByDepartment(deptId, cursor, size) : 
+                                "completed".equalsIgnoreCase(status)  ? boardService.getCompletedBoardsByDepartment(deptId, cursor, size) : 
+                                                                        boardService.getBoardsByDepartment(deptId, cursor, size);
+            List<BoardResponseDto> boardDtos = boards.stream()
+                    .map(BoardResponseDto::from)
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 조회 성공", boardDtos));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponseDto<>(false, e.getMessage(), null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDto<>(false, "서버에서 문제가 발생했습니다.", null));
+        }
     }
+    
 
     @Operation(summary = "게시판 생성", description = "새로운 게시판을 생성합니다. 관리자 또는 매니저 권한이 필요합니다.")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
@@ -75,7 +84,7 @@ public class BoardController {
 
     @Operation(summary = "게시판 상세 조회", description = "특정 게시판의 상세 정보를 조회합니다.")
     @PreAuthorize("@securityService.canAccessBoard(authentication, #boardId)")
-    @GetMapping("/{boardId}/detail")
+    @GetMapping("/{boardId:\\d+}/detail")
     public ResponseEntity<ApiResponseDto<BoardResponseDto>> getBoardById(@PathVariable Long boardId) {
         Board board = boardService.getBoardById(boardId);
         return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 조회 성공", BoardResponseDto.from(board)));
@@ -83,7 +92,7 @@ public class BoardController {
 
     @Operation(summary = "게시판 수정", description = "특정 게시판의 내용을 수정합니다. 관리자 또는 매니저 권한이 필요합니다.")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN') and @securityService.canAccessBoard(authentication, #boardId)")
-    @PutMapping("/{boardId}")
+    @PutMapping("/{boardId:\\d+}")
     public ResponseEntity<ApiResponseDto<BoardResponseDto>> updateBoard(
             @PathVariable Long boardId,
             @RequestBody BoardCreateRequestDto request) {
@@ -93,7 +102,7 @@ public class BoardController {
 
     @Operation(summary = "게시판 삭제", description = "특정 게시판을 삭제합니다. 관리자 또는 매니저 권한이 필요합니다.")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN') and @securityService.canAccessBoard(authentication, #boardId)")
-    @DeleteMapping("/{boardId}")
+    @DeleteMapping("/{boardId:\\d+}")
     public ResponseEntity<ApiResponseDto<Void>> deleteBoard(@PathVariable Long boardId) {
         boardService.deleteBoard(boardId);
         return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 삭제 성공", null));

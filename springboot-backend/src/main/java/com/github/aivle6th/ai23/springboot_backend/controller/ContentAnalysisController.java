@@ -16,7 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
-@RequestMapping("/api/{boardId}/{postId}")
+@RequestMapping("/api/{boardId:\\d+}/{postId:\\d+}")
 @RequiredArgsConstructor
 @Tag(name = "Content Analysis API", description = "게시물 분석 결과 관리 API")
 public class ContentAnalysisController {
