@@ -40,17 +40,17 @@ public class SecurityConfig{
         .csrf(csrf ->csrf.disable())
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(auth -> auth
-            // 관리자 경로
-            .requestMatchers("/admin/**").hasRole("ADMIN")
-
-            // Board, Post 경로(인증 필요)
-            .requestMatchers("/api/**").authenticated()
-
             // 공개 경로 허용
             .requestMatchers("api/user/login", "/api/user/signup").permitAll()
 
             // Swagger 경로
             .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
+
+            // 관리자 경로
+            .requestMatchers("/admin/**").hasRole("ADMIN")
+
+            // Board, Post 경로(인증 필요)
+            .requestMatchers("/api/**").authenticated()
 
             // 이 외의 경로(인증 필요)
             .anyRequest().authenticated()
