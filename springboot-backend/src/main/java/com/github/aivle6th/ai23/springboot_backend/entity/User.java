@@ -43,7 +43,7 @@ public class User {
     @OneToMany(mappedBy = "user")
     private List<AuditLog> auditLogs = new ArrayList<>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "dept_id")
     private Department department;
 

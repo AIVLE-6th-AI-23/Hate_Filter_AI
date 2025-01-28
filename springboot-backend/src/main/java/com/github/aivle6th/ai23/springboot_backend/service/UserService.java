@@ -1,6 +1,6 @@
 package com.github.aivle6th.ai23.springboot_backend.service;
 
-import com.github.aivle6th.ai23.springboot_backend.dto.UserSignupRequestDto;
+import com.github.aivle6th.ai23.springboot_backend.dto.UserInfoRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import com.github.aivle6th.ai23.springboot_backend.repository.UserRepository;
 
@@ -18,7 +18,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public String signup(UserSignupRequestDto requestDto) {
+    public String signup(UserInfoRequestDto requestDto) {
         if (userRepository.existsByEmployeeId(requestDto.getEmployeeId())) {
             throw new IllegalArgumentException("User already exists");
         }
@@ -30,7 +30,7 @@ public class UserService {
     }
 
     @Transactional
-    public String updateUserInfo(UserSignupRequestDto requestDto) {
+    public String updateUserInfo(UserInfoRequestDto requestDto) {
         User user = userRepository.findByEmployeeId(requestDto.getEmployeeId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
@@ -56,7 +56,12 @@ public class UserService {
     @Transactional(readOnly = true)
     public String getDeptIdByEmployeeId(String employeeId) {
         return userRepository.findByEmployeeId(employeeId)
-                .map(user -> user.getDepartment().getDeptId())
+                .map(user -> {
+                    if (user.getDepartment() == null) {
+                        throw new IllegalArgumentException("Department not found for user with employeeId: " + employeeId);
+                    }
+                    return user.getDepartment().getDeptId();
+                })
                 .orElseThrow(() -> new IllegalArgumentException("User not found with employeeId: " + employeeId));
     }
 
