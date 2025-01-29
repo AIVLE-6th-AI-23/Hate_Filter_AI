@@ -1,6 +1,6 @@
 from PIL import Image
 import io
-from app.models.ai_models import text_detector, hate_speech_classifier
+from models.ai_models import text_detector, hate_speech_classifier
 
 class ImageService:
     async def analyze(self, file):

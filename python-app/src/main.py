@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from app.core.config import setup_cors
-from app.api.endpoints import image
+from core.config import setup_cors
+from api.endpoints import image
 
 app = FastAPI()
 setup_cors(app)
