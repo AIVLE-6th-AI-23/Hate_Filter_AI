@@ -3,6 +3,7 @@ package com.github.aivle6th.ai23.springboot_backend.controller;
 import com.github.aivle6th.ai23.springboot_backend.dto.ApiResponseDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.PostRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.PostResponseDto;
+import com.github.aivle6th.ai23.springboot_backend.service.BlobStorageService;
 import com.github.aivle6th.ai23.springboot_backend.service.PostService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,13 +13,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -30,6 +34,7 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
+    private final BlobStorageService blobStorageService;
 
     @Operation(summary = "게시판의 게시물 목록 조회", description = "특정 게시판에 등록된 게시물 목록을 조회합니다.")
     @PreAuthorize("@securityService.canAccessBoard(authentication, #boardId)")
@@ -88,11 +93,37 @@ public class PostController {
 
     @Operation(summary = "게시물 조회수 증가", description = "특정 게시물의 조회수를 증가시킵니다.")
     @PreAuthorize("@securityService.canAccessPost(authentication, #postId)")
-    @PatchMapping("/{postId:\\d+}")
+    @PatchMapping("/{postId:\\d+}/view")
     public ResponseEntity<ApiResponseDto<Void>> increaseViewCount(
             @Parameter(description = "게시물 ID", required = true) @PathVariable Long postId) {
         postService.incrementViewCount(postId);
         return ResponseEntity.ok(new ApiResponseDto<>(true, "Post 조회수 업데이트 성공", null));
+    }
+
+    @Operation(summary = "게시물 상태 업데이트", description = "특정 게시물의 상태를 업데이트 합니다.")
+    @PreAuthorize("@securityService.canAccessPost(authentication, #postId)")
+    @PatchMapping("/{postId:\\d+}/status")
+    public ResponseEntity<ApiResponseDto<Void>> updateStatus(
+            @Parameter(description = "게시물 ID", required = true) @PathVariable Long postId,
+            @Parameter(description = "상태", required = true) @PathVariable String status) {
+        postService.updateStatus(postId, status);;
+        return ResponseEntity.ok(new ApiResponseDto<>(true, "Post 조회수 업데이트 성공", null));
+    }
+
+    @Operation(summary = "파일 업로드", description = "특정 게시물에 대한 파일을 업로드 및 Url을 저장 합니다.")
+    @PreAuthorize("@securityService.canAccessPost(authentication, #postId)")
+    @PostMapping(value = "/{postId:\\d+}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> uploadFile(
+        @Parameter(description = "게시물 ID", required = true) @PathVariable Long postId,
+        @Parameter(description = "업로드할 파일", required = true)
+        @RequestParam("file") MultipartFile file) {
+        try {
+            String fileUrl = blobStorageService.uploadFile(file, postId);
+            postService.updateThumbnail(postId, fileUrl);
+            return ResponseEntity.ok("File uploaded and saved successfully");
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body("File upload or saved failed: " + e.getMessage());
+        }
     }
 
     @Operation(summary = "게시물 삭제", description = "특정 게시물을 삭제합니다.")
