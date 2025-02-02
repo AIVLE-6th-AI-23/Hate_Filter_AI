@@ -31,11 +31,9 @@ public class ContentAnalysisService {
 
     public ContentAnalysisResponseDto getContentAnalysisWithPost(Long postId) {
         ContentAnalysis contentAnalysis =  contentAnalysisRepository.findContentAnalysisWithDetails(postId)
-                .orElseThrow(() -> new RuntimeException("Content Analysis not found"));
+                .orElse(new ContentAnalysis());
 
         return ContentAnalysisResponseDto.analysisToDto(contentAnalysis);
-
-
     }
 
     @Transactional
