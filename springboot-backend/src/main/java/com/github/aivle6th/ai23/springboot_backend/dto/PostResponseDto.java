@@ -15,9 +15,11 @@ public class PostResponseDto {
     private final Long userId;
     private final String postTitle;
     private final String description;
+    private final String thumbnail;
     private final LocalDateTime createdAt;
     private final LocalDateTime modifiedAt;
     private final Long viewCount;
+    private final String status;
 
     // 엔티티에서 DTO로 변환하는 메서드
     //TODO mapper로 변경하기
@@ -28,9 +30,11 @@ public class PostResponseDto {
                 .userId(post.getUser().getUserId())
                 .postTitle(post.getPostTitle())
                 .description(post.getDescription())
+                .thumbnail(post.getThumbnail())
                 .createdAt(post.getCreatedAt())
                 .modifiedAt(post.getModifiedAt())
                 .viewCount(post.getViewCount())
+                .status(post.getStatus())
                 .build();
     }
 }

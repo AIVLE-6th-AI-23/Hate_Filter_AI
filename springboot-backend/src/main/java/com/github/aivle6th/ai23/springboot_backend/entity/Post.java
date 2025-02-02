@@ -26,6 +26,9 @@ public class Post {
     @Column(name = "description")
     private String description;
 
+    @Column(name = "thumbnail")
+    private String thumbnail;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -34,6 +37,9 @@ public class Post {
 
     @Column(name = "view_count")
     private Long viewCount;
+
+    @Column(name = "status")
+    private String status;
 
     @ManyToOne
     @JoinColumn(name = "board_id")

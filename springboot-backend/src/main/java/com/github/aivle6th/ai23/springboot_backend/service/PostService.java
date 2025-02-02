@@ -100,10 +100,19 @@ public class PostService {
      * @param postId
      * @return
      */
-    // 왜 void 지???
     @Transactional
     public void incrementViewCount(Long postId) {
         postRepository.increaseViewCount(postId);
+    }
+
+    @Transactional
+    public void updateStatus(Long postId, String status){
+        postRepository.updateStatus(postId, status);
+    }
+
+    @Transactional
+    public void updateThumbnail(Long postId, String thumbnailUrl){
+        postRepository.updateThumbnail(postId, thumbnailUrl);
     }
 
     /**

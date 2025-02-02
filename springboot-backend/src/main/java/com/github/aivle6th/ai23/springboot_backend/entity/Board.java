@@ -28,9 +28,6 @@ public class Board {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "is_public")
-    private Boolean isPublic;
-
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -49,19 +46,17 @@ public class Board {
     private List<Post> posts = new ArrayList<>();
 
     @Builder
-    public Board(Long boardId, String boardTitle, String description, Boolean isPublic, LocalDateTime endDate) {
+    public Board(Long boardId, String boardTitle, String description, LocalDateTime endDate) {
         this.boardId = boardId;
         this.boardTitle = boardTitle;
         this.description = description;
-        this.isPublic = isPublic;
         this.endDate = endDate;
         this.createdAt = LocalDateTime.now();
     }
 
-    public void updateBoard(String boardTitle, String description, Boolean isPublic, LocalDateTime endDate) {
+    public void updateBoard(String boardTitle, String description, LocalDateTime endDate) {
         this.boardTitle = boardTitle;
         this.description = description;
-        this.isPublic = isPublic;
         this.endDate = endDate;
     }
 

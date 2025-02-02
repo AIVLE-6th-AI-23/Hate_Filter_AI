@@ -12,10 +12,9 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class BoardCreateRequestDto {
+public class BoardRequestDto {
     private String boardTitle;
     private String description;
-    private Boolean isPublic;
     private LocalDateTime endDate;
     private List<String> deptIds;
 }

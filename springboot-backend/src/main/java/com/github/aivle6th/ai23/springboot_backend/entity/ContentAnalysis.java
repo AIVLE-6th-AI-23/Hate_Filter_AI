@@ -29,9 +29,6 @@ public class ContentAnalysis {
     @Column(name = "analyzed_at")
     private LocalDateTime analyzedAt;
 
-    @Column(name = "status")
-    private String status;
-
     @OneToOne
     @JoinColumn(name = "post_id")
     private Post post;

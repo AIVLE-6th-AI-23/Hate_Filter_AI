@@ -15,7 +15,6 @@ public class ContentAnalysisRequestDto {
 
     private final String contentType;
     private final String analysisDetail;
-    private final String status;
     private final LocalDateTime analyzedAt;
 
 
@@ -23,7 +22,6 @@ public class ContentAnalysisRequestDto {
         return ContentAnalysis.builder()
                 .contentType(contentType)
                 .analysisDetail(this.analysisDetail)
-                .status(this.status)
                 .analyzedAt(LocalDateTime.now())
                 .post(post)
                 .build();

@@ -1,6 +1,6 @@
 package com.github.aivle6th.ai23.springboot_backend.service;
 
-import com.github.aivle6th.ai23.springboot_backend.dto.BoardCreateRequestDto;
+import com.github.aivle6th.ai23.springboot_backend.dto.BoardRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.entity.Board;
 import com.github.aivle6th.ai23.springboot_backend.entity.Department;
 import com.github.aivle6th.ai23.springboot_backend.repository.BoardRepository;
@@ -27,11 +27,10 @@ public class BoardService {
     private final DepartmentRepository departmentRepository;
 
     // 게시판 생성
-    public Board createBoard(BoardCreateRequestDto requestDto) {
+    public Board createBoard(BoardRequestDto requestDto) {
         Board board = Board.builder()
                 .boardTitle(requestDto.getBoardTitle())
                 .description(requestDto.getDescription())
-                .isPublic(requestDto.getIsPublic())
                 .endDate(requestDto.getEndDate())
                 .build();
 
@@ -80,14 +79,13 @@ public class BoardService {
     }
 
     // 게시판 수정
-    public Board updateBoard(Long boardId, BoardCreateRequestDto requestDto) {
+    public Board updateBoard(Long boardId, BoardRequestDto requestDto) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("게시판을 찾을 수 없습니다: " + boardId));
 
         board.updateBoard(
             requestDto.getBoardTitle(),
                 requestDto.getDescription(),
-                requestDto.getIsPublic(),
                 requestDto.getEndDate()
         );
 

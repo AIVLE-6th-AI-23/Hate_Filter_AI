@@ -1,7 +1,7 @@
 package com.github.aivle6th.ai23.springboot_backend.controller;
 
 import com.github.aivle6th.ai23.springboot_backend.dto.ApiResponseDto;
-import com.github.aivle6th.ai23.springboot_backend.dto.BoardCreateRequestDto;
+import com.github.aivle6th.ai23.springboot_backend.dto.BoardRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.BoardResponseDto;
 import com.github.aivle6th.ai23.springboot_backend.entity.Board;
 import com.github.aivle6th.ai23.springboot_backend.service.BoardService;
@@ -71,7 +71,7 @@ public class BoardController {
     @Operation(summary = "게시판 생성", description = "새로운 게시판을 생성합니다. 관리자 또는 매니저 권한이 필요합니다.")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     @PostMapping("/create")
-    public ResponseEntity<ApiResponseDto<BoardResponseDto>> createBoard(@RequestBody BoardCreateRequestDto request) {
+    public ResponseEntity<ApiResponseDto<BoardResponseDto>> createBoard(@RequestBody BoardRequestDto request) {
         try {
             Board savedBoard = boardService.createBoard(request);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 생성 성공", BoardResponseDto.from(savedBoard)));
@@ -95,7 +95,7 @@ public class BoardController {
     @PutMapping("/{boardId:\\d+}")
     public ResponseEntity<ApiResponseDto<BoardResponseDto>> updateBoard(
             @PathVariable Long boardId,
-            @RequestBody BoardCreateRequestDto request) {
+            @RequestBody BoardRequestDto request) {
         Board updatedBoard = boardService.updateBoard(boardId, request);
         return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 수정 성공", BoardResponseDto.from(updatedBoard)));
     }

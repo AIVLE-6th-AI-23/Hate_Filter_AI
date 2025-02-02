@@ -15,7 +15,6 @@ public class ContentAnalysisResponseDto {
     private final Long analysisId;
     private final String contentType;
     private final String analysisDetail;
-    private final String status;
     private final LocalDateTime analysisAt;
     private final List<AnalysisCategoryResultResponseDto> analysisCategoryResultResponseDto;
 
@@ -29,7 +28,6 @@ public class ContentAnalysisResponseDto {
                 .contentType(contentAnalysis.getContentType())
                 .analysisDetail(contentAnalysis.getAnalysisDetail())
                 .analysisAt(contentAnalysis.getAnalyzedAt())
-                .status(contentAnalysis.getStatus())
                 .analysisCategoryResultResponseDto(result)
                 .build();
     }
