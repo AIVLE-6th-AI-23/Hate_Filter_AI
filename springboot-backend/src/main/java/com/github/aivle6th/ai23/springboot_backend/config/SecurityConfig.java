@@ -41,7 +41,7 @@ public class SecurityConfig{
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(auth -> auth
             // 공개 경로 허용
-            .requestMatchers("api/user/login", "/api/user/signup").permitAll()
+            .requestMatchers("/api/user/login", "/api/user/signup").permitAll()
 
             // Swagger 경로
             .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
