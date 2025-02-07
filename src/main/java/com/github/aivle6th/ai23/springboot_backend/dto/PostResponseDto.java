@@ -36,9 +36,4 @@ public class PostResponseDto {
                 .status(post.getStatus())
                 .build();
     }
-
-    public void setUserId(Long userId2) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setUserId'");
-    }
 }

@@ -8,7 +8,7 @@ import com.github.aivle6th.ai23.springboot_backend.dto.AnalysisStartRequestDTO;
 
 @Service
 public class ContentAnalysisAIService {
-    @Value("${content-analysis.ai-server.url}")
+    @Value("${server.ai.url}")
     private String aiServerUrl;
 
     private final RestTemplate restTemplate = new RestTemplate();
