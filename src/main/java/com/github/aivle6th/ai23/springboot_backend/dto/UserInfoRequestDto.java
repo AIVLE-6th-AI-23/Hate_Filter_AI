@@ -1,5 +1,6 @@
 package com.github.aivle6th.ai23.springboot_backend.dto;
 
+import com.github.aivle6th.ai23.springboot_backend.entity.Department;
 import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
@@ -29,7 +30,7 @@ public class UserInfoRequestDto {
     @Size(min = 8, message = "비밀번호는 8자 이상이어야 합니다")
     private String password;
 
-    private Long deptId;
+    private String deptId;
 
     // User 엔티티로 변환하는 메소드
     public User toEntity() {

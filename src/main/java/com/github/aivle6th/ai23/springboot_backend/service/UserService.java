@@ -1,7 +1,9 @@
 package com.github.aivle6th.ai23.springboot_backend.service;
 
 import com.github.aivle6th.ai23.springboot_backend.dto.UserInfoRequestDto;
+import com.github.aivle6th.ai23.springboot_backend.entity.Department;
 import com.github.aivle6th.ai23.springboot_backend.entity.User;
+import com.github.aivle6th.ai23.springboot_backend.repository.DepartmentRepository;
 import com.github.aivle6th.ai23.springboot_backend.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final DepartmentRepository departmentRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -24,6 +27,9 @@ public class UserService {
         }
     
         User newUser = requestDto.toEntity();
+        Department department = departmentRepository.findById(requestDto.getDeptId())
+                                    .orElseThrow(() -> new IllegalArgumentException("Department not found"));
+        newUser.setDepartment(department);
         newUser.setPassword(passwordEncoder.encode(requestDto.getPassword()));
         userRepository.save(newUser);
         return "User created successfully";
