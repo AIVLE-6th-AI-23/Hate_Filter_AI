@@ -34,6 +34,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 
 @RestController
@@ -124,14 +125,14 @@ public class UserController {
         }
     }
 
-    @Operation(summary = "권한 업데이트", description = "사용자의 권한을 업데이트 합니다. 관리자 권한이 필요합니다.")
+    @Operation(summary = "사용자 권한 업데이트", description = "사용자의 권한을 업데이트 합니다. 관리자 권한이 필요합니다.")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    @PutMapping("/roles")
-    public ResponseEntity<ApiResponseDto<Void>> updateUserRoles(@RequestBody Set<RoleType> newRoles){
+    @PutMapping("/{employeeId}/roles")
+    public ResponseEntity<ApiResponseDto<Void>> updateUserRoles(
+        @Parameter(description = "사용자 Employee ID", required = true) @PathVariable String employeeId,
+        @RequestBody Set<RoleType> newRoles
+    ){
         try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            String employeeId = ((UserDetails) authentication.getPrincipal()).getUsername();
-
             userService.updateUserRoles(employeeId, newRoles);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "사용자 권한 업데이트 성공", null));
         } catch (Exception e) {

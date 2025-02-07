@@ -90,6 +90,7 @@ public class UserService {
                             .orElseThrow(() -> new EntityNotFoundException("User not found with employeeId : " + employeeId));
     }
 
+    @Transactional
     public void updateUserRoles(String employeeId, Set<RoleType> roles){
         User user = userRepository.findByEmployeeId(employeeId)
                                 .orElseThrow(() -> new EntityNotFoundException("User not found with employeeId : " + employeeId));
