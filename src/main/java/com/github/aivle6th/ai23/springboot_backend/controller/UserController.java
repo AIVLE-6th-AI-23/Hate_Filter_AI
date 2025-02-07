@@ -7,6 +7,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.github.aivle6th.ai23.springboot_backend.dto.ApiResponseDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.UserLoginRequestDto;
+import com.github.aivle6th.ai23.springboot_backend.dto.UserLoginResponseDto;
+import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import com.github.aivle6th.ai23.springboot_backend.dto.UserInfoRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.service.UserService;
 
@@ -36,7 +39,7 @@ public class UserController {
 
     @PostMapping("/login")
     @Operation(summary = "사용자 로그인", description = "사용자의 로그인 요청을 처리합니다.")
-    public ResponseEntity<ApiResponseDto<String>> login(
+    public ResponseEntity<ApiResponseDto<UserLoginResponseDto>> login(
         @Parameter(description = "로그인 요청 데이터", required = true) @RequestBody UserLoginRequestDto loginRequest,
         HttpServletRequest request
     ){
@@ -50,8 +53,12 @@ public class UserController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             HttpSession session = request.getSession(true);
             session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
-        
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "로그인 성공", null));
+
+            // Profile 정보 조회
+            String employeeId = ((UserDetails) authentication.getPrincipal()).getUsername();
+            User user = userService.getUserByEmployeeId(employeeId);
+            
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "로그인 성공", new UserLoginResponseDto(user)));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponseDto<>(false, "아이디 또는 비밀번호가 잘못되었습니다.", null));
