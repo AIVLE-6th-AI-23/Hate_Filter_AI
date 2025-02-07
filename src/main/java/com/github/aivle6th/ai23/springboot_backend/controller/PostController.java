@@ -1,5 +1,6 @@
 package com.github.aivle6th.ai23.springboot_backend.controller;
 
+import com.beust.jcommander.internal.Nullable;
 import com.github.aivle6th.ai23.springboot_backend.dto.ApiResponseDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.PostRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.PostResponseDto;
@@ -101,11 +102,10 @@ public class PostController {
     }
 
     @Operation(summary = "게시물 상태 업데이트", description = "특정 게시물의 상태를 업데이트 합니다.")
-    @PreAuthorize("@securityService.canAccessPost(authentication, #postId)")
-    @PatchMapping("/{postId:\\d+}/status")
+    @PatchMapping("/{postId:\\d+}/status/{status}")
     public ResponseEntity<ApiResponseDto<Void>> updateStatus(
             @Parameter(description = "게시물 ID", required = true) @PathVariable Long postId,
-            @Parameter(description = "상태", required = true) @PathVariable String status) {
+            @Parameter(description = "상태", required = false) @Nullable @PathVariable String status) {
         postService.updateStatus(postId, status);;
         return ResponseEntity.ok(new ApiResponseDto<>(true, "Post 상태 업데이트 성공", null));
     }

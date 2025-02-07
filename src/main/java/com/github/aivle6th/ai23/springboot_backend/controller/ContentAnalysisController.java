@@ -54,12 +54,11 @@ public class ContentAnalysisController {
     }
 
     @Operation(summary = "분석 결과 생성", description = "특정 게시물에 대한 분석 결과를 생성합니다.")
-    @PostMapping("/content-analysis")
-    // TODO AI 서버에서만 호출 가능하도록 설정하기
+    @PostMapping("/content-analysis/create")
     public ResponseEntity<ApiResponseDto<ContentAnalysisResponseDto>> createContentAnalysis(
             @RequestBody ContentAnalysisCreateRequestDto requestDto,
             @Parameter(description = "게시물 ID", required = true) @PathVariable Long postId) {
-        // 서비스 호출
+
         ContentAnalysis contentAnalysis = contentAnalysisService.createContentAnalysis(
                 requestDto.getContentAnalysisRequestDto(),
                 requestDto.getAnalysisCategoryResultRequestDto(),
@@ -99,8 +98,7 @@ public class ContentAnalysisController {
     }
     
     @Operation(summary = "분석 완료 시 알림 전송", description = "AI 분석 완료 시 client에게 알림을 전송합니다.")
-    @PostMapping("/push/send")
-    // TODO AI 서버에서만 호출 가능하도록 설정하기
+    @PostMapping("/content-analysis/notifications")
     public ResponseEntity<ApiResponseDto<Void>> sendPushNotification(@RequestBody AnalysisCompleteRequestDTO analysisCompleteRequestDTO ) {
         try{
             notificationService.sendPushNotification(new Subscription(
