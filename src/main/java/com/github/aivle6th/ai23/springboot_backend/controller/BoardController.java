@@ -5,6 +5,7 @@ import com.github.aivle6th.ai23.springboot_backend.dto.BoardRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.BoardResponseDto;
 import com.github.aivle6th.ai23.springboot_backend.entity.Board;
 import com.github.aivle6th.ai23.springboot_backend.service.BoardService;
+import com.github.aivle6th.ai23.springboot_backend.service.CustomUserDetailsService;
 import com.github.aivle6th.ai23.springboot_backend.service.UserService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -34,6 +36,7 @@ import java.util.stream.Collectors;
 public class BoardController {
     private final BoardService boardService;
     private final UserService userService;
+    private final CustomUserDetailsService userDetailsService;
 
     @Operation(summary = "게시판 조회", description = "현재 로그인한 사용자의 부서에 따라 게시판 목록을 조회합니다.")
     @GetMapping("")
@@ -57,6 +60,13 @@ public class BoardController {
             List<BoardResponseDto> boardDtos = boards.stream()
                     .map(BoardResponseDto::from)
                     .collect(Collectors.toList());
+            
+            SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                userDetailsService.loadUserByUsername(employeeId), 
+                userDetailsService.loadUserByUsername(employeeId).getPassword(),
+                userDetailsService.loadUserByUsername(employeeId).getAuthorities()
+            ));
+            
             return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 조회 성공", boardDtos));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
