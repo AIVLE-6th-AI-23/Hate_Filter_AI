@@ -11,8 +11,8 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserLoginResponseDto {
-    public UserLoginResponseDto(User user) {
+public class UserProfileResponseDto {
+    public UserProfileResponseDto(User user) {
         this.userName = user.getUserName();
         this.deptId = user.getDepartment().getDeptId();
     }

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.github.aivle6th.ai23.springboot_backend.dto.ApiResponseDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.UserLoginRequestDto;
-import com.github.aivle6th.ai23.springboot_backend.dto.UserLoginResponseDto;
+import com.github.aivle6th.ai23.springboot_backend.dto.UserProfileResponseDto;
 import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import com.github.aivle6th.ai23.springboot_backend.dto.UserInfoRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.service.UserService;
@@ -28,6 +28,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/api/user")
@@ -39,7 +42,7 @@ public class UserController {
 
     @PostMapping("/login")
     @Operation(summary = "사용자 로그인", description = "사용자의 로그인 요청을 처리합니다.")
-    public ResponseEntity<ApiResponseDto<UserLoginResponseDto>> login(
+    public ResponseEntity<ApiResponseDto<UserProfileResponseDto>> login(
         @Parameter(description = "로그인 요청 데이터", required = true) @RequestBody UserLoginRequestDto loginRequest,
         HttpServletRequest request
     ){
@@ -57,8 +60,8 @@ public class UserController {
             // Profile 정보 조회
             String employeeId = ((UserDetails) authentication.getPrincipal()).getUsername();
             User user = userService.getUserByEmployeeId(employeeId);
-            
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "로그인 성공", new UserLoginResponseDto(user)));
+
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "로그인 성공", new UserProfileResponseDto(user)));
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponseDto<>(false, "아이디 또는 비밀번호가 잘못되었습니다.", null));
@@ -93,6 +96,27 @@ public class UserController {
             return ResponseEntity.ok(new ApiResponseDto<>(true, "비밀번호 변경 성공, 재로그인이 필요합니다.", updateResponse));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new ApiResponseDto<>(false, e.getMessage(), null));
+        }
+    }
+
+    @Operation(summary = "유저 프로필 조회", description = "현재 세션의 로그인된 사용자의 정보를 반환")
+    @GetMapping("/profile")
+    public ResponseEntity<ApiResponseDto<UserProfileResponseDto>> getProfile() {
+        try{
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+            if (authentication == null || authentication.getPrincipal().equals("anonymousUser")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ApiResponseDto<>(false, "현재 세션이 만료 되었습니다. 재로그인이 필요합니다.", null));
+            }
+
+            String employeeId = ((UserDetails) authentication.getPrincipal()).getUsername();
+            
+            UserProfileResponseDto userProfileResponseDto = new UserProfileResponseDto(userService.getUserByEmployeeId(employeeId));
+            return ResponseEntity.ok(new ApiResponseDto<UserProfileResponseDto>(true, "프로필 조회", userProfileResponseDto));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDto<>(false, "로그인 중 문제가 발생했습니다.", null));
         }
     }
 }
