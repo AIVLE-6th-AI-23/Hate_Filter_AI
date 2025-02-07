@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -50,13 +51,11 @@ public class User {
     @OneToMany(mappedBy = "user")
     private List<Post> posts = new ArrayList<>();
 
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-        name = "USER_ROLE",
-        joinColumns = @JoinColumn(name = "user_id"),
-        inverseJoinColumns = @JoinColumn(name = "role_id")
-    )
-    private Set<Role> roles;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
+    @CollectionTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "role")
+    private Set<RoleType> roles = new HashSet<>();
 
     public void updateLastLogin(LocalDateTime lastLogin) {
         this.lastLogin = lastLogin;

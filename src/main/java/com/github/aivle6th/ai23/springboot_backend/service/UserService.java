@@ -2,12 +2,16 @@ package com.github.aivle6th.ai23.springboot_backend.service;
 
 import com.github.aivle6th.ai23.springboot_backend.dto.UserInfoRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.entity.Department;
+import com.github.aivle6th.ai23.springboot_backend.entity.RoleType;
 import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import com.github.aivle6th.ai23.springboot_backend.repository.DepartmentRepository;
 import com.github.aivle6th.ai23.springboot_backend.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+
+import java.util.Set;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +35,8 @@ public class UserService {
                                     .orElseThrow(() -> new IllegalArgumentException("Department not found"));
         newUser.setDepartment(department);
         newUser.setPassword(passwordEncoder.encode(requestDto.getPassword()));
+        newUser.setRoles(Set.of(RoleType.ROLE_USER));
+
         userRepository.save(newUser);
         return "User created successfully";
     }
@@ -71,15 +77,24 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found with employeeId: " + employeeId));
     }
 
+    @Transactional
     public void updateUserActiveStatus(String employeeId, boolean isActive) {
         User user = userRepository.findByEmployeeId(employeeId)
                                 .orElseThrow(() -> new EntityNotFoundException("User not found with employeeId : " + employeeId));
         user.setIsActive(isActive);
     }
 
+    @Transactional(readOnly = true)
     public User getUserByEmployeeId(String employeeId){
         return userRepository.findByEmployeeId(employeeId)
                             .orElseThrow(() -> new EntityNotFoundException("User not found with employeeId : " + employeeId));
+    }
+
+    public void updateUserRoles(String employeeId, Set<RoleType> roles){
+        User user = userRepository.findByEmployeeId(employeeId)
+                                .orElseThrow(() -> new EntityNotFoundException("User not found with employeeId : " + employeeId));
+        user.setRoles(roles);
+        userRepository.save(user);
     }
 }
 

@@ -1,7 +1,10 @@
 package com.github.aivle6th.ai23.springboot_backend.controller;
 
+import java.util.Set;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -10,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.github.aivle6th.ai23.springboot_backend.dto.ApiResponseDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.UserLoginRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.UserProfileResponseDto;
+import com.github.aivle6th.ai23.springboot_backend.entity.RoleType;
 import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import com.github.aivle6th.ai23.springboot_backend.dto.UserInfoRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.service.UserService;
@@ -29,7 +34,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 @RestController
@@ -76,7 +80,7 @@ public class UserController {
     public ResponseEntity<ApiResponseDto<String>> signup(
             @Parameter(description = "회원가입 요청 데이터", required = true) @RequestBody UserInfoRequestDto user) {
         String response = userService.signup(user);
-        return ResponseEntity.ok(new ApiResponseDto<>(true, "회원가입 성공", response));
+        return ResponseEntity.ok(new ApiResponseDto<String>(true, "회원가입 성공", response));
     }
 
     @Operation(summary = "회원 정보 수정", description = "사용자 정보를 수정하고 비밀번호 변경 시 세션을 무효화합니다.")
@@ -116,7 +120,23 @@ public class UserController {
             return ResponseEntity.ok(new ApiResponseDto<UserProfileResponseDto>(true, "프로필 조회", userProfileResponseDto));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponseDto<>(false, "로그인 중 문제가 발생했습니다.", null));
+                    .body(new ApiResponseDto<>(false, "프로필 조회 중 문제가 발생했습니다.", null));
+        }
+    }
+
+    @Operation(summary = "권한 업데이트", description = "사용자의 권한을 업데이트 합니다. 관리자 권한이 필요합니다.")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PutMapping("/roles")
+    public ResponseEntity<ApiResponseDto<Void>> updateUserRoles(@RequestBody Set<RoleType> newRoles){
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String employeeId = ((UserDetails) authentication.getPrincipal()).getUsername();
+
+            userService.updateUserRoles(employeeId, newRoles);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "사용자 권한 업데이트 성공", null));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDto<>(false, "사용자 권한 업데이트 중 문제가 발생했습니다.", null));
         }
     }
 }
