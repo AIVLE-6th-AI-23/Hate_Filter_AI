@@ -1,6 +1,5 @@
 package com.github.aivle6th.ai23.springboot_backend.dto;
 
-import com.github.aivle6th.ai23.springboot_backend.entity.Department;
 import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;

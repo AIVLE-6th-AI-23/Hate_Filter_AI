@@ -4,6 +4,8 @@ import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -20,8 +22,10 @@ public class Role {
     @Column(name = "role_id")
     private Long roleId;
 
-    @Column(name = "role_name")
-    private String roleName;
+    
+    @Enumerated(EnumType.STRING) // 문자열로 저장
+    @Column(nullable = false, unique = true)
+    private RoleType roleName;
 
     @ManyToMany(mappedBy = "roles")
     private Set<User> users;

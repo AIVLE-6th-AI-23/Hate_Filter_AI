@@ -31,7 +31,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         Set<GrantedAuthority> authorities = new HashSet<>();
         
         for (Role role : user.getRoles()) {
-            authorities.add(new SimpleGrantedAuthority(role.getRoleName()));
+            authorities.add(new SimpleGrantedAuthority(role.getRoleName().toString()));
         }
 
         if(user.getDepartment() != null){
