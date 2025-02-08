@@ -33,10 +33,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 
+@Slf4j
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
@@ -68,9 +71,11 @@ public class UserController {
 
             return ResponseEntity.ok(new ApiResponseDto<>(true, "로그인 성공", new UserProfileResponseDto(user)));
         } catch (BadCredentialsException e) {
+            log.error("로그인 실패: ", e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiResponseDto<>(false, "아이디 또는 비밀번호가 잘못되었습니다.", null));
         } catch (Exception e) {
+            log.error("로그인 실패: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponseDto<>(false, "로그인 중 문제가 발생했습니다.", null));
         }
@@ -80,8 +85,14 @@ public class UserController {
     @PostMapping("/signup")
     public ResponseEntity<ApiResponseDto<String>> signup(
             @Parameter(description = "회원가입 요청 데이터", required = true) @RequestBody UserInfoRequestDto user) {
-        String response = userService.signup(user);
-        return ResponseEntity.ok(new ApiResponseDto<String>(true, "회원가입 성공", response));
+        try {
+            String response = userService.signup(user);
+            return ResponseEntity.ok(new ApiResponseDto<String>(true, "회원가입 성공", response));
+        } catch(Exception e) {
+            log.error("회원가입 실패: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDto<>(false, "회원가입 중 문제가 발생했습니다.", null));
+        }
     }
 
     @Operation(summary = "회원 정보 수정", description = "사용자 정보를 수정하고 비밀번호 변경 시 세션을 무효화합니다.")
@@ -100,7 +111,13 @@ public class UserController {
 
             return ResponseEntity.ok(new ApiResponseDto<>(true, "비밀번호 변경 성공, 재로그인이 필요합니다.", updateResponse));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(new ApiResponseDto<>(false, e.getMessage(), null));
+            log.error("회원 정보 수정 실패: ", e);
+            return ResponseEntity.badRequest().body(new ApiResponseDto<>(false, "잘못된 요청 입니다.", null));
+        } catch (Exception e) {
+            log.error("회원 정보 수정 실패: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDto<>(false, "회원 정보 수정 중 문제가 발생했습니다.", null));
+            
         }
     }
 
@@ -110,9 +127,10 @@ public class UserController {
         try{
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
+            // Profile 정보 없음 제공
             if (authentication == null || authentication.getPrincipal().equals("anonymousUser")) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiResponseDto<>(false, "현재 세션이 만료 되었습니다. 재로그인이 필요합니다.", null));
+                return ResponseEntity
+                    .ok(new ApiResponseDto<>(false, "현재 세션이 만료 되었습니다. 재로그인이 필요합니다.", null));
             }
 
             String employeeId = ((UserDetails) authentication.getPrincipal()).getUsername();
@@ -120,6 +138,7 @@ public class UserController {
             UserProfileResponseDto userProfileResponseDto = new UserProfileResponseDto(userService.getUserByEmployeeId(employeeId));
             return ResponseEntity.ok(new ApiResponseDto<UserProfileResponseDto>(true, "프로필 조회", userProfileResponseDto));
         } catch (Exception e) {
+            log.error("유저 프로필 조회 실패: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponseDto<>(false, "프로필 조회 중 문제가 발생했습니다.", null));
         }
@@ -136,6 +155,7 @@ public class UserController {
             userService.updateUserRoles(employeeId, newRoles);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "사용자 권한 업데이트 성공", null));
         } catch (Exception e) {
+            log.error("사용자 권한 업데이트 실패: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponseDto<>(false, "사용자 권한 업데이트 중 문제가 발생했습니다.", null));
         }

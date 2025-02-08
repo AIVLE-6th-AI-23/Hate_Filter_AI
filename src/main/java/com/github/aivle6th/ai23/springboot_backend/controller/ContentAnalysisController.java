@@ -49,25 +49,35 @@ public class ContentAnalysisController {
     @GetMapping("/content-analysis")
     public ResponseEntity<ApiResponseDto<ContentAnalysisResponseDto>> getContentAnalysis(
             @Parameter(description = "게시물 ID", required = true) @PathVariable Long postId) {
-        ContentAnalysisResponseDto contentAnalysis = contentAnalysisService.getContentAnalysisWithPost(postId);
-        return ResponseEntity.ok(new ApiResponseDto<>(true, "분석 결과 조회 성공", contentAnalysis));
+        try {
+            ContentAnalysisResponseDto contentAnalysis = contentAnalysisService.getContentAnalysisWithPost(postId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "분석 결과 조회 성공", contentAnalysis));
+        } catch (Exception e) {
+            log.error("분석 결과 조회 실패: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDto<>(false, "분석 결과 조회 중 문제가 발생했습니다.", null));
+        }
     }
-
     @Operation(summary = "분석 결과 생성", description = "특정 게시물에 대한 분석 결과를 생성합니다.")
     @PostMapping("/content-analysis/create")
     public ResponseEntity<ApiResponseDto<ContentAnalysisResponseDto>> createContentAnalysis(
             @RequestBody ContentAnalysisCreateRequestDto requestDto,
             @Parameter(description = "게시물 ID", required = true) @PathVariable Long postId) {
+        try {
+            ContentAnalysis contentAnalysis = contentAnalysisService.createContentAnalysis(
+                    requestDto.getContentAnalysisRequestDto(),
+                    requestDto.getAnalysisCategoryResultRequestDto(),
+                    postId
+            );
+            log.info(requestDto.getContentAnalysisRequestDto().getContentType());
 
-        ContentAnalysis contentAnalysis = contentAnalysisService.createContentAnalysis(
-                requestDto.getContentAnalysisRequestDto(),
-                requestDto.getAnalysisCategoryResultRequestDto(),
-                postId
-        );
-        log.info(requestDto.getContentAnalysisRequestDto().getContentType());
-
-        ContentAnalysisResponseDto savedresponseDto = ContentAnalysisResponseDto.analysisToDto(contentAnalysis);
-        return ResponseEntity.ok(new ApiResponseDto<>(true, "분석 결과 생성 성공", savedresponseDto));
+            ContentAnalysisResponseDto savedresponseDto = ContentAnalysisResponseDto.analysisToDto(contentAnalysis);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "분석 결과 생성 성공", savedresponseDto));
+        } catch (Exception e) {
+            log.error("분석 결과 생성 실패: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDto<>(false, "분석 결과 생성 중 문제가 발생했습니다.", null));
+        }
     }
 
     @Operation(summary = "분석 시작", description = "AI 서버에 요청하여 특정 게시물에 대한 분석을 시작합니다.")
@@ -89,11 +99,13 @@ public class ContentAnalysisController {
             String message = contentAnalysisAIService.start(request);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "분석 시작 성공" + message, null));
         } catch (IllegalArgumentException e) {
+            log.error("분석 시작 실패: ", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponseDto<>(false, e.getMessage(), null));
+                    .body(new ApiResponseDto<>(false, "잘못된 요청 입니다.", null));
         } catch (Exception e) {
+            log.error("분석 시작 실패: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponseDto<>(false, "서버에서 문제가 발생했습니다.", null));
+                    .body(new ApiResponseDto<>(false, "분석 시작 중 문제가 발생했습니다.", null));
         }
     }
     
@@ -111,11 +123,13 @@ public class ContentAnalysisController {
             mailService.sendContentAnalysisNotificationEmail(user.getEmail(), analysisCompleteRequestDTO.getResultSummary());
             return ResponseEntity.ok(new ApiResponseDto<>(true, "알림 전송 성공", null));
         } catch (IllegalArgumentException e) {
+            log.error("알림 전송 실패: ", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponseDto<>(false, e.getMessage(), null));
+                    .body(new ApiResponseDto<>(false,"잘못된 요청 입니다.", null));
         } catch (Exception e) {
+            log.error("알림 전송 실패: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponseDto<>(false, "서버에서 문제가 발생했습니다.", null));
+                    .body(new ApiResponseDto<>(false, "알림 전송 중 서버에서 문제가 발생했습니다.", null));
         }
     }
 }

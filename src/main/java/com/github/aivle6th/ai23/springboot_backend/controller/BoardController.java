@@ -69,9 +69,11 @@ public class BoardController {
             
             return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 조회 성공", boardDtos));
         } catch (IllegalArgumentException e) {
+            log.error("게시판 조회 실패: ", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponseDto<>(false, e.getMessage(), null));
+                    .body(new ApiResponseDto<>(false, "잘못된 요청 입니다.", null));
         } catch (Exception e) {
+            log.error("게시판 조회 실패: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponseDto<>(false, "서버에서 문제가 발생했습니다.", null));
         }
@@ -88,7 +90,7 @@ public class BoardController {
         } catch (Exception e) {
             log.error("게시판 생성 실패: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponseDto<>(false, "게시판 생성 실패: " + e.getMessage(), null));
+                    .body(new ApiResponseDto<>(false, "게시판 생성 실패 중 문제가 발생했습니다.", null));
         }
     }
 
@@ -96,8 +98,14 @@ public class BoardController {
     @PreAuthorize("@securityService.canAccessBoard(authentication, #boardId)")
     @GetMapping("/{boardId:\\d+}/detail")
     public ResponseEntity<ApiResponseDto<BoardResponseDto>> getBoardById(@PathVariable Long boardId) {
-        Board board = boardService.getBoardById(boardId);
-        return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 조회 성공", BoardResponseDto.from(board)));
+        try {
+            Board board = boardService.getBoardById(boardId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 상세 조회 성공", BoardResponseDto.from(board)));
+        }  catch (Exception e) {
+            log.error("게시판 상세 조회 실패: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDto<>(false, "게시판 상세 조회 중 문제가 발생했습니다.", null));
+        }
     }
 
     @Operation(summary = "게시판 수정", description = "특정 게시판의 내용을 수정합니다. 관리자 또는 매니저 권한이 필요합니다.")
@@ -106,16 +114,28 @@ public class BoardController {
     public ResponseEntity<ApiResponseDto<BoardResponseDto>> updateBoard(
             @PathVariable Long boardId,
             @RequestBody BoardRequestDto request) {
-        Board updatedBoard = boardService.updateBoard(boardId, request);
-        return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 수정 성공", BoardResponseDto.from(updatedBoard)));
+        try {
+            Board updatedBoard = boardService.updateBoard(boardId, request);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 수정 성공", BoardResponseDto.from(updatedBoard)));
+        } catch (Exception e) {
+            log.error("게시판 수정 실패: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDto<>(false, "게시판 수정 중 문제가 발생했습니다.", null));
+        }
     }
 
     @Operation(summary = "게시판 삭제", description = "특정 게시판을 삭제합니다. 관리자 또는 매니저 권한이 필요합니다.")
     @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN') and @securityService.canAccessBoard(authentication, #boardId)")
     @DeleteMapping("/{boardId:\\d+}")
     public ResponseEntity<ApiResponseDto<Void>> deleteBoard(@PathVariable Long boardId) {
-        boardService.deleteBoard(boardId);
-        return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 삭제 성공", null));
+        try {
+            boardService.deleteBoard(boardId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "게시판 삭제 성공", null));
+        }  catch (Exception e) {
+            log.error("게시판 삭제 실패: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDto<>(false, "게시판 삭제 중 문제가 발생했습니다.", null)); 
+        }
     }
 
     // @GetMapping("/all")
