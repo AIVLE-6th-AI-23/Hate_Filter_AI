@@ -66,7 +66,7 @@ public class SecurityConfig{
             })
 
             // 공개 경로 허용
-            .requestMatchers("/api/user/login", "/api/user/signup").permitAll()
+            .requestMatchers("/api/user/login", "/api/user/signup", "/api/user/profile").permitAll()
 
             // Swagger 경로
             .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
@@ -109,7 +109,7 @@ public class SecurityConfig{
     public SecurityFilterChain filterChain_production(HttpSecurity http) throws Exception {
         http
         .csrf(csrf -> csrf
-            .ignoringRequestMatchers("/api/*/posts/*/status/**", "/api/*/content-analysis/**", "/api/user/login", "/api/user/signup")    
+            .ignoringRequestMatchers("/api/*/posts/*/status/**", "/api/*/content-analysis/**", "/api/user/login", "/api/user/signup", "/api/user/profile")    
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
                 
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -128,7 +128,7 @@ public class SecurityConfig{
             })
 
             // 공개 경로 허용
-            .requestMatchers("/api/user/login", "/api/user/signup").permitAll()
+            .requestMatchers("/api/user/login", "/api/user/signup", "/api/user/profile").permitAll()
 
             // Swagger 경로
             .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
