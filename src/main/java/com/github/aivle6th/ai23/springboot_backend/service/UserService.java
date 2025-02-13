@@ -1,9 +1,11 @@
 package com.github.aivle6th.ai23.springboot_backend.service;
 
 import com.github.aivle6th.ai23.springboot_backend.dto.UserInfoRequestDto;
+import com.github.aivle6th.ai23.springboot_backend.dto.UserVerifyRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.entity.Department;
 import com.github.aivle6th.ai23.springboot_backend.entity.RoleType;
 import com.github.aivle6th.ai23.springboot_backend.entity.User;
+import com.github.aivle6th.ai23.springboot_backend.entity.UserRole;
 import com.github.aivle6th.ai23.springboot_backend.repository.DepartmentRepository;
 import com.github.aivle6th.ai23.springboot_backend.repository.UserRepository;
 
@@ -35,7 +37,7 @@ public class UserService {
                                     .orElseThrow(() -> new IllegalArgumentException("Department not found"));
         newUser.setDepartment(department);
         newUser.setPassword(passwordEncoder.encode(requestDto.getPassword()));
-        newUser.setRoles(Set.of(RoleType.ROLE_USER));
+        newUser.setRoles(Set.of(new UserRole(newUser, RoleType.ROLE_USER)));
 
         userRepository.save(newUser);
         return "User created successfully";
@@ -94,8 +96,33 @@ public class UserService {
     public void updateUserRoles(String employeeId, Set<RoleType> roles){
         User user = userRepository.findByEmployeeId(employeeId)
                                 .orElseThrow(() -> new EntityNotFoundException("User not found with employeeId : " + employeeId));
-        user.setRoles(roles);
+        user.getRoles().clear();
+        for(RoleType role: roles){
+            user.getRoles().add(new UserRole(user, role));
+        }
         userRepository.save(user);
+    }
+    
+    @Transactional
+    public void updateUserPassword(String employeeId, String newPassword){
+        User user = userRepository.findByEmployeeId(employeeId)
+                                .orElseThrow(() -> new EntityNotFoundException("User not found with employeeId : " + employeeId));
+        user.setPassword(passwordEncoder.encode(newPassword)); 
+    }
+
+    public boolean checkEmployeeId(String employeeId){
+        User user = userRepository.findByEmployeeId(employeeId).orElse(null);
+        return user != null;
+    }
+
+    public boolean verifyUser(UserVerifyRequestDto userVerifyRequestDto){
+        User user = userRepository.findByEmployeeId(userVerifyRequestDto.getEmployeeId()).orElse(null);
+        if(user == null){
+            return false;
+        } else {
+            return user.getDepartment().getDeptId().equals(userVerifyRequestDto.getDeptId()) &&
+                    user.getEmail().equals(userVerifyRequestDto.getEmail());
+        }
     }
 }
 

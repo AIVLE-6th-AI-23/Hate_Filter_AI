@@ -16,15 +16,20 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.github.aivle6th.ai23.springboot_backend.dto.ApiResponseDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.UserLoginRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.dto.UserProfileResponseDto;
+import com.github.aivle6th.ai23.springboot_backend.dto.UserResetPasswordRequestDto;
+import com.github.aivle6th.ai23.springboot_backend.dto.UserVerifyRequestDto;
 import com.github.aivle6th.ai23.springboot_backend.entity.RoleType;
 import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import com.github.aivle6th.ai23.springboot_backend.dto.UserInfoRequestDto;
+import com.github.aivle6th.ai23.springboot_backend.service.MailService;
 import com.github.aivle6th.ai23.springboot_backend.service.UserService;
+import com.github.aivle6th.ai23.springboot_backend.util.JwtTokenProvider;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -47,6 +52,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 public class UserController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
+    private final MailService mailService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/login")
     @Operation(summary = "사용자 로그인", description = "사용자의 로그인 요청을 처리합니다.")
@@ -68,7 +75,10 @@ public class UserController {
             // Profile 정보 조회
             String employeeId = ((UserDetails) authentication.getPrincipal()).getUsername();
             User user = userService.getUserByEmployeeId(employeeId);
-
+            
+            // Active 처리
+            userService.updateUserActiveStatus(employeeId, true);
+            
             return ResponseEntity.ok(new ApiResponseDto<>(true, "로그인 성공", new UserProfileResponseDto(user)));
         } catch (BadCredentialsException e) {
             log.error("로그인 실패: ", e);
@@ -92,6 +102,55 @@ public class UserController {
             log.error("회원가입 실패: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponseDto<>(false, "회원가입 중 문제가 발생했습니다.", null));
+        }
+    }
+
+    @Operation(summary = "아이디 중복 확인", description = "아이디(사원 번호)를 중복 확인 합니다.")
+    @GetMapping("/checkid/{employeeId}")
+    public ResponseEntity<ApiResponseDto<Boolean>> checkId(
+        @Parameter(description = "사용자 Employee ID", required = true) @PathVariable String employeeId
+    ) {
+        try {
+            boolean response = userService.checkEmployeeId(employeeId);
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "아이디 중복 확인 성공", response));
+        } catch(Exception e) {
+            log.error("아이디 중복 확인 실패: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDto<>(false, "아이디 중복 확인 중 문제가 발생했습니다.", null));
+        }
+    }
+    @Operation(summary = "비밀 번호 재설정", description = "새로운 비밀번호로 재설정 합니다.")
+    @PostMapping("/password/reset")
+    public ResponseEntity<ApiResponseDto<Void>> resetPassword(
+        @Parameter(description = "JWT token") @RequestParam String token, 
+        @Parameter(description = "새로운 비밀번호", required = true) @RequestBody UserResetPasswordRequestDto newPassword
+    ) {
+        try {
+            String employeeId = jwtTokenProvider.getEmployeeIdFromToken(token);
+            userService.updateUserPassword(employeeId, newPassword.getNewPassword());
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "비밀 번호 재설정 성공", null));
+        } catch(Exception e) {
+            log.error("비밀 번호 재설정 실패 : ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDto<>(false, "비밀 번호 재설정 중 문제가 발생했습니다.", null));
+        }
+    }
+
+    @Operation(summary = "사용자 인증 (회원 정보)", description = "비밀번호 재설정을 위해 회원 정보(사번, 부서, email)를 통해 사용자를 인증 및 비밀번호 재설정 메일을 전송합니다.")
+    @PostMapping("/verify")
+    public ResponseEntity<ApiResponseDto<Boolean>> verifyUser(
+        @Parameter(description = "회원 정보(사번, 부서, email)", required = true) @RequestBody UserVerifyRequestDto userVerifyRequestDto
+    ) {
+        try {
+            boolean verified = userService.verifyUser(userVerifyRequestDto);
+            if(verified){ // 인증 성공한 경우 재설정 메일 전송
+                mailService.sendPasswordResetEmail(userVerifyRequestDto);
+            }
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "사용자 인증 성공", verified));
+        } catch(Exception e) {
+            log.error("사용자 인증 (회원 정보) 실패 : ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDto<>(false, "사용자 인증 (회원 정보) 중 문제가 발생했습니다.", null));
         }
     }
 

@@ -14,4 +14,8 @@ public class UserStatusManager {
     public void deactivateUser(String username) {
         userService.updateUserActiveStatus(username, false);
     }
+
+    public void activateUser(String username) {
+        userService.updateUserActiveStatus(username, true);
+    }
 }
