@@ -28,5 +28,15 @@
     "name": "server.ai.url",
     "type": "java.lang.String",
     "description": "A description for 'server.ai.url'"
+  },
+  {
+    "name": "jwt.secret",
+    "type": "java.lang.String",
+    "description": "A description for 'jwt.secret'"
+  },
+  {
+    "name": "server.ai.key",
+    "type": "java.lang.String",
+    "description": "A description for 'server.ai.key'"
   }
 ]}
