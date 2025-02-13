@@ -39,6 +39,8 @@ public class SecurityConfig{
     private String AIServerUrl;
     @Value("${server.fe.url}")
     private String FEServerUrl;
+    @Value("${server.ai.key}")
+    private String APIKEY;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
@@ -52,21 +54,19 @@ public class SecurityConfig{
         .csrf(csrf -> csrf.disable())                
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/*/posts/*/status/**", "/api/*/content-analysis/*").access((request, context) -> {
+            .requestMatchers("/api/*/posts/*/status*", "/api/*/content-analysis/notifications", "/api/*/content-analysis/create").access((request, context) -> {
                 String method = context.getRequest().getMethod();
-                String host = context.getRequest().getHeader("Host");
-                
-                String allowedHost = AIServerUrl.replaceAll("https?://", "").split(":")[0];
-                // AI 서버만 허용
-                boolean isAllowedHost = host.contains(allowedHost);
+                String apiKey = context.getRequest().getHeader("X-API-KEY");
+                // API 키 인증
+                boolean isAllowedAPIkey = apiKey.equals(APIKEY);   
                 // POST 또는 PATCH 요청만 허용
                 boolean isAllowedMethod = "POST".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method);
 
-                return new AuthorizationDecision(isAllowedHost && isAllowedMethod);
+                return new AuthorizationDecision(isAllowedAPIkey && isAllowedMethod);
             })
 
             // 공개 경로 허용
-            .requestMatchers("/api/user/login", "/api/user/signup", "/api/user/profile").permitAll()
+            .requestMatchers("/api/user/login", "/api/user/signup", "/api/user/profile", "/api/user/verify", "/api/user/checkid/*", "/api/user/password/reset").permitAll()
 
             // Swagger 경로
             .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
@@ -80,6 +80,7 @@ public class SecurityConfig{
             // 이 외의 경로(인증 필요)
             .anyRequest().authenticated()
         )
+        .userDetailsService(customUserDetailsService)
         .logout(logout -> logout
             .logoutUrl("/api/user/logout") // 로그아웃 URL
             .invalidateHttpSession(true) // 세션 무효화
@@ -109,26 +110,22 @@ public class SecurityConfig{
     public SecurityFilterChain filterChain_production(HttpSecurity http) throws Exception {
         http
         .csrf(csrf -> csrf
-            .ignoringRequestMatchers("/api/*/posts/*/status/**", "/api/*/content-analysis/**", "/api/user/login", "/api/user/signup", "/api/user/profile")    
+            .ignoringRequestMatchers("/api/*/posts/*/status*", "/api/*/content-analysis/notifications", "/api/*/content-analysis/create", "/api/user/login", "/api/user/signup", "/api/user/profile", "/api/user/verify", "/api/user/checkid/*", "/api/user/password/reset")    
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
-                
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/*/posts/*/status/**", "/api/*/content-analysis/*").access((request, context) -> {
+            .requestMatchers("/api/*/posts/*/status/**", "/api/*/content-analysis/notifications", "/api/*/content-analysis/create").access((request, context) -> {
                 String method = context.getRequest().getMethod();
-                String host = context.getRequest().getHeader("Host");
-                
-                String allowedHost = AIServerUrl.replaceAll("https?://", "").split(":")[0];
-                // AI 서버만 허용
-                boolean isAllowedHost = host.contains(allowedHost);
+                String apiKey = context.getRequest().getHeader("X-API-KEY");
+                boolean isAllowedAPIkey = apiKey.equals(APIKEY);   
                 // POST 또는 PATCH 요청만 허용
                 boolean isAllowedMethod = "POST".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method);
 
-                return new AuthorizationDecision(isAllowedHost && isAllowedMethod);
+                return new AuthorizationDecision(isAllowedAPIkey && isAllowedMethod);
             })
 
             // 공개 경로 허용
-            .requestMatchers("/api/user/login", "/api/user/signup", "/api/user/profile").permitAll()
+            .requestMatchers("/api/user/login", "/api/user/signup", "/api/user/profile", "/api/user/verify", "/api/user/checkid/*", "/api/user/password/reset").permitAll()
 
             // Swagger 경로
             .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
@@ -142,6 +139,7 @@ public class SecurityConfig{
             // 이 외의 경로(인증 필요)
             .anyRequest().authenticated()
         )
+        .userDetailsService(customUserDetailsService)
         .logout(logout -> logout
             .logoutUrl("/api/user/logout") // 로그아웃 URL
             .invalidateHttpSession(true) // 세션 무효화
@@ -159,6 +157,7 @@ public class SecurityConfig{
             })
             .permitAll()
         )
+        .requiresChannel(channel -> channel.anyRequest().requiresSecure()) 
         .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // 세션 생성 활성화(기본 설정)
         );
@@ -177,7 +176,6 @@ public class SecurityConfig{
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin(AIServerUrl);
         configuration.addAllowedOrigin(FEServerUrl);
         configuration.addAllowedMethod("*"); // 모든 HTTP 메서드 허용
         configuration.addAllowedHeader("*"); // 모든 헤더 허용
