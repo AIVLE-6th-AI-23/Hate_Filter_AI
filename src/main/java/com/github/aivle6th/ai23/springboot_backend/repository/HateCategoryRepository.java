@@ -9,5 +9,5 @@ import java.util.List;
 @Repository
 public interface HateCategoryRepository extends JpaRepository<HateCategory,Long> {
 
-    List<HateCategory> findAllByCategoryIdIn(List<Long> categoryIds);
+    List<HateCategory> findAllByCategoryNameIn(List<String> categoryNames);
 }

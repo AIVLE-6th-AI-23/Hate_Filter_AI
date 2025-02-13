@@ -1,5 +1,9 @@
 package com.github.aivle6th.ai23.springboot_backend.entity;
 
+import java.util.Map;
+
+import com.github.aivle6th.ai23.springboot_backend.util.JsonConverter;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,8 +22,9 @@ public class AnalysisCategoryResult {
     @Column(name = "category_score")
     private Float categoryScore;
 
-    @Column(name = "detection_metadata")
-    private String detectionMetadata;
+    @Column(name = "detection_metadata", columnDefinition = "json")
+    @Convert(converter = JsonConverter.class)
+    private Map<String, Object> detectionMetadata;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "analysis_id")

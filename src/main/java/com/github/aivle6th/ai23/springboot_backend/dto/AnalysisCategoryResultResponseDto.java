@@ -1,5 +1,7 @@
 package com.github.aivle6th.ai23.springboot_backend.dto;
 
+import java.util.Map;
+
 import com.github.aivle6th.ai23.springboot_backend.entity.AnalysisCategoryResult;
 import com.github.aivle6th.ai23.springboot_backend.entity.HateCategory;
 import lombok.Builder;
@@ -12,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 public class AnalysisCategoryResultResponseDto {
     private final Long resultId;
     private final Float categoryScore;
-    private final String detectionMetadata;
+    private final Map<String, Object> detectionMetadata;
     private final String categoryName;
     private final String description;
     private final Long severityLevel;
