@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -49,8 +51,9 @@ public class Post {
     @JoinColumn(name = "user_id")
     private User user;
 
-    @OneToOne(mappedBy = "post")
-    private ContentAnalysis contentAnalysis;
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ContentAnalysis> contentAnalysis = new ArrayList<>();
 
     // 엔티티 저장 시 기본값 설정
     @PrePersist

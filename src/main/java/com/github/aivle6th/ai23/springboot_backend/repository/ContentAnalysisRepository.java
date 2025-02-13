@@ -17,6 +17,7 @@ public interface ContentAnalysisRepository extends JpaRepository<ContentAnalysis
         LEFT JOIN FETCH acr.hateCategory 
         WHERE ca.post.postId = :postId
         ORDER BY ca.analyzedAt DESC
+        LIMIT 1
     """)
     Optional<ContentAnalysis> findContentAnalysisWithDetails(Long postId);
 

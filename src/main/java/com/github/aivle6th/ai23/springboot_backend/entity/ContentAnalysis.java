@@ -23,14 +23,14 @@ public class ContentAnalysis {
     @Column(name = "content_type")
     private String contentType;
 
-    @Column(name = "analysis_detail")
+    @Column(name = "analysis_detail", columnDefinition = "TEXT")
     private String analysisDetail;
 
     @Column(name = "analyzed_at")
     private LocalDateTime analyzedAt;
 
-    @OneToOne
-    @JoinColumn(name = "post_id")
+    @ManyToOne
+    @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
     @OneToMany(mappedBy = "contentAnalysis" ,cascade = CascadeType.ALL)
