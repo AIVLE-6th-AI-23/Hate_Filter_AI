@@ -11,7 +11,6 @@ import com.github.aivle6th.ai23.springboot_backend.entity.User;
 import com.github.aivle6th.ai23.springboot_backend.service.ContentAnalysisService;
 import com.github.aivle6th.ai23.springboot_backend.service.MailService;
 import com.github.aivle6th.ai23.springboot_backend.service.PostService;
-import com.github.aivle6th.ai23.springboot_backend.service.PushNotificationService;
 import com.github.aivle6th.ai23.springboot_backend.service.UserService;
 import com.github.aivle6th.ai23.springboot_backend.service.ContentAnalysisAIService;
 
@@ -20,7 +19,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nl.martijndwars.webpush.Subscription;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +36,6 @@ import org.springframework.web.bind.annotation.*;
 public class ContentAnalysisController {
 
     private final ContentAnalysisService contentAnalysisService;
-    private final PushNotificationService notificationService;
     private final ContentAnalysisAIService contentAnalysisAIService;
     private final PostService postService;
     private final UserService userService;
@@ -81,6 +78,7 @@ public class ContentAnalysisController {
     }
 
     @Operation(summary = "분석 시작", description = "AI 서버에 요청하여 특정 게시물에 대한 분석을 시작합니다.")
+    @PreAuthorize("@securityService.canAccessPost(authentication, #postId)")
     @PostMapping("/content-analysis/start")
     public ResponseEntity<ApiResponseDto<Void>> startContentAnalysis(
         @Parameter(description = "게시물 ID", required = true) @PathVariable Long postId
@@ -95,9 +93,13 @@ public class ContentAnalysisController {
             String employeeId = ((UserDetails) authentication.getPrincipal()).getUsername();
             
             AnalysisStartRequestDTO request = new AnalysisStartRequestDTO(postService.getPostById(postId), employeeId);
-             
-            String message = contentAnalysisAIService.start(request);
-            return ResponseEntity.ok(new ApiResponseDto<>(true, "분석 시작 성공" + message, null));
+            
+            Boolean response = contentAnalysisAIService.start(request);
+            if(!response){
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiResponseDto<>(false, "분석 시작 중 AI 서버에서 에러가 발생했습니다.", null));
+            }
+            return ResponseEntity.ok(new ApiResponseDto<>(true, "분석 시작 성공", null));
         } catch (IllegalArgumentException e) {
             log.error("분석 시작 실패: ", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -111,16 +113,12 @@ public class ContentAnalysisController {
     
     @Operation(summary = "분석 완료 시 알림 전송", description = "AI 분석 완료 시 client에게 알림을 전송합니다.")
     @PostMapping("/content-analysis/notifications")
-    public ResponseEntity<ApiResponseDto<Void>> sendPushNotification(@RequestBody AnalysisCompleteRequestDTO analysisCompleteRequestDTO ) {
+    public ResponseEntity<ApiResponseDto<Void>> sendPushNotification(
+        @RequestBody AnalysisCompleteRequestDTO analysisCompleteRequestDTO 
+    ) {
         try{
-            notificationService.sendPushNotification(new Subscription(
-                analysisCompleteRequestDTO.getSubscriptionEndpoint(), 
-                new Subscription.Keys(analysisCompleteRequestDTO.getSubscriptionKeyp256h(), analysisCompleteRequestDTO.getSubscriptionKeyAuth())
-            ), 
-            analysisCompleteRequestDTO.getResultSummary());
-            
             User user = userService.getUserByEmployeeId(analysisCompleteRequestDTO.getEmployeeId());
-            mailService.sendContentAnalysisNotificationEmail(user.getEmail(), analysisCompleteRequestDTO.getResultSummary());
+            mailService.sendContentAnalysisNotificationEmail(user.getEmail(), analysisCompleteRequestDTO);
             return ResponseEntity.ok(new ApiResponseDto<>(true, "알림 전송 성공", null));
         } catch (IllegalArgumentException e) {
             log.error("알림 전송 실패: ", e);
