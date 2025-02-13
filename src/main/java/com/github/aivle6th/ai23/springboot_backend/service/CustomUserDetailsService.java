@@ -2,8 +2,8 @@ package com.github.aivle6th.ai23.springboot_backend.service;
 
 import com.github.aivle6th.ai23.springboot_backend.entity.Board;
 import com.github.aivle6th.ai23.springboot_backend.entity.Department;
-import com.github.aivle6th.ai23.springboot_backend.entity.RoleType;
 import com.github.aivle6th.ai23.springboot_backend.entity.User;
+import com.github.aivle6th.ai23.springboot_backend.entity.UserRole;
 import com.github.aivle6th.ai23.springboot_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -30,8 +30,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         
         Set<GrantedAuthority> authorities = new HashSet<>();
         
-        for (RoleType role : user.getRoles()) {
-            authorities.add(new SimpleGrantedAuthority(role.toString()));
+        for (UserRole role : user.getRoles()) {
+            authorities.add(new SimpleGrantedAuthority(role.getRole().toString()));
         }
 
         if(user.getDepartment() != null){
