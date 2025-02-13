@@ -45,21 +45,21 @@ public class ContentAnalysisService {
                                 .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다: " + postId));
         ContentAnalysis contentAnalysis = contentAnalysisRequestDto.toEntity(post);
 
-        //분석카테고리 결과 dto에서 categoryId 들을조회
-        List<Long> categoryIds = analysisCategoryResultDtos.stream()
-                .map(AnalysisCategoryResultRequestDto::getCategoryId)
+        // 분석카테고리 결과 dto에서 categoryId 들을조회
+        List<String> categoryNames = analysisCategoryResultDtos.stream()
+                .map(AnalysisCategoryResultRequestDto::getCategoryName)
                 .toList();
-
+ 
         // 해당 categoryIds의 hateCateory조회
-        List<HateCategory> hateCategories = hateCategoryRepository.findAllByCategoryIdIn(categoryIds);
+        List<HateCategory> hateCategories = hateCategoryRepository.findAllByCategoryNameIn(categoryNames);
 
         // AnalysisCategoryResult 생성
         List<AnalysisCategoryResult> categoryResults = analysisCategoryResultDtos.stream()
                 .map(dto -> {
                     HateCategory hateCategory = hateCategories.stream()
-                            .filter(hc -> hc.getCategoryId().equals(dto.getCategoryId()))
+                            .filter(hc -> hc.getCategoryName().equals(dto.getCategoryName()))
                             .findFirst()
-                            .orElseThrow(() -> new EntityNotFoundException("HateCategory not found for ID: " + dto.getCategoryId()));
+                            .orElseThrow(() -> new EntityNotFoundException("HateCategory not found for Name: " + dto.getCategoryName()));
                     return dto.toEntity(hateCategory ,contentAnalysis);
                 })
                 .toList();

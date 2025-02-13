@@ -7,8 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AnalysisCompleteRequestDTO {
     private final String employeeId;
-    private final String subscriptionEndpoint;
-    private final String subscriptionKeyp256h;
-    private final String subscriptionKeyAuth;
+    private final Long postId;
+    private final Long boardId;
     private final String resultSummary;
 }

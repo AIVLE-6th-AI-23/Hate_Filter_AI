@@ -34,6 +34,7 @@ public class PostService {
      * @param postRequestDto
      * @return 생성한 postId 일단 id만, 생성한거 잘 들어갔는지 전부 다 보고 싶으면 post로 내놓기
      */
+    @Transactional
     public PostResponseDto createPost(String employeeId, PostRequestDto postRequestDto) {
 
         Board board = boardRepository.findById(postRequestDto.getBoardId())
@@ -81,6 +82,7 @@ public class PostService {
      * @param postRequestDto
      * @return
      */
+    @Transactional
     public PostResponseDto updatePostById(Long postId, PostRequestDto postRequestDto) {
         // 1. 기존 post 찾기
         Post post = postRepository.findById(postId)
