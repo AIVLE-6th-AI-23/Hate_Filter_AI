@@ -54,7 +54,7 @@ public class BoardController {
 
             String employeeId = ((UserDetails) authentication.getPrincipal()).getUsername();
             String deptId = userService.getDeptIdByEmployeeId(employeeId);
-            List<Board> boards = "active".equalsIgnoreCase(status)     ? boardService.getActiveBoardsByDepartment(deptId, cursor, size) : 
+            List<Board> boards = "active".equalsIgnoreCase(status)    ? boardService.getActiveBoardsByDepartment(deptId, cursor, size) : 
                                 "completed".equalsIgnoreCase(status)  ? boardService.getCompletedBoardsByDepartment(deptId, cursor, size) : 
                                                                         boardService.getBoardsByDepartment(deptId, cursor, size);
             List<BoardResponseDto> boardDtos = boards.stream()

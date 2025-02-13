@@ -61,8 +61,8 @@ public class Board {
     }
 
     public void setDepartments(Set<Department> departments){
-        departments.stream()
-               .forEach(this.departments::add);
+        this.departments.clear();
+        this.departments.addAll(departments);
     }
 }
 
