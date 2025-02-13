@@ -133,10 +133,10 @@ public class PostController {
     }
 
     @Operation(summary = "게시물 상태 업데이트", description = "특정 게시물의 상태를 업데이트 합니다.")
-    @PatchMapping("/{postId:\\d+}/status/{status}")
+    @PatchMapping("/{postId:\\d+}/status")
     public ResponseEntity<ApiResponseDto<Void>> updateStatus(
             @Parameter(description = "게시물 ID", required = true) @PathVariable Long postId,
-            @Parameter(description = "상태", required = false) @Nullable @PathVariable String status) {
+            @Parameter(description = "상태", required = false) @Nullable @RequestParam(required = false) String status) {
         try {
             postService.updateStatus(postId, status);;
             return ResponseEntity.ok(new ApiResponseDto<>(true, "Post 상태 업데이트 성공", null));
