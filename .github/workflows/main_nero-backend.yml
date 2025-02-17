@@ -86,5 +86,5 @@ jobs:
         with:
           app-name: 'nero-backend'  # Azure Web App 이름
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7E3256F8197A45EFA791910492230C74 }}
           package: './springboot-app.jar'  # 특정 파일만 명시
