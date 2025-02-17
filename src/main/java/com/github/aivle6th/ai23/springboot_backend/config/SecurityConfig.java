@@ -114,7 +114,7 @@ public class SecurityConfig{
     public SecurityFilterChain filterChain_production(HttpSecurity http) throws Exception {
         http
         .csrf(csrf -> csrf
-            .ignoringRequestMatchers("/api/*/posts/*/status*", "/api/*/content-analysis/notifications", "/api/*/content-analysis/create", "/api/user/signup", "/api/user/profile", "/api/user/verify", "/api/user/checkid/*", "/api/user/password/reset", "/api/user/logout")    
+            .ignoringRequestMatchers("/api/*/posts/*/status*", "/api/*/content-analysis/notifications", "/api/*/content-analysis/create", "/api/user/login", "/api/user/signup", "/api/user/profile", "/api/user/verify", "/api/user/checkid/*", "/api/user/password/reset", "/api/user/logout")    
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(auth -> auth
