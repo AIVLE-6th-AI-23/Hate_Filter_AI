@@ -15,9 +15,9 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -39,6 +39,8 @@ public class SecurityConfig{
 
     @Value("${server.ai.url}")
     private String AIServerUrl;
+    @Value("${server.relay.url}")
+    private String RelayServerUrl;
     @Value("${server.fe.url}")
     private String FEServerUrl;
     @Value("${server.ai.key}")
@@ -111,7 +113,9 @@ public class SecurityConfig{
     @Profile("prod")
     public SecurityFilterChain filterChain_production(HttpSecurity http) throws Exception {
         http
-        .csrf(csrf -> csrf.disable())
+        .csrf(csrf -> csrf
+            .ignoringRequestMatchers("/api/*/posts/*/status*", "/api/*/content-analysis/notifications", "/api/*/content-analysis/create", "/api/user/login", "/api/user/signup", "/api/user/profile", "/api/user/verify", "/api/user/checkid/*", "/api/user/password/reset", "/api/user/logout")    
+            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/*/posts/*/status/**", "/api/*/content-analysis/notifications", "/api/*/content-analysis/create").access((request, context) -> {
@@ -126,9 +130,6 @@ public class SecurityConfig{
 
             // 공개 경로 허용
             .requestMatchers("/api/user/login", "/api/user/signup", "/api/user/profile", "/api/user/verify", "/api/user/checkid/*", "/api/user/password/reset").permitAll()
-
-            // Swagger 경로
-            .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
 
             // 관리자 경로
             .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -150,7 +151,6 @@ public class SecurityConfig{
                 if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
                     String username = ((UserDetails) authentication.getPrincipal()).getUsername();
                     userStatusManager.deactivateUser(username);
-                    SecurityContextHolder.clearContext();
                 }
             })
             .logoutSuccessHandler((request, response, authentication) -> {
@@ -181,6 +181,7 @@ public class SecurityConfig{
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.addAllowedOrigin(FEServerUrl);
         configuration.addAllowedOrigin(AIServerUrl);
+        configuration.addAllowedOrigin(RelayServerUrl);
         configuration.addAllowedMethod("*"); // 모든 HTTP 메서드 허용
         configuration.addAllowedHeader("*"); // 모든 헤더 허용
         configuration.setAllowCredentials(true); // 쿠키 전송 허용

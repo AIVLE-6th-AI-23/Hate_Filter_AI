@@ -14,8 +14,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ContentAnalysisAIService {
-    @Value("${server.ai.url}")
-    private String aiServerUrl;
+    @Value("${server.relay.url}")
+    private String relayServerUrl;
 
     private final RestTemplate restTemplate;
 
@@ -24,7 +24,7 @@ public class ContentAnalysisAIService {
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<AnalysisStartRequestDTO> httpRequest = new HttpEntity<>(request, headers);
-        return restTemplate.postForObject(aiServerUrl + "/analyze/start", httpRequest, Boolean.class);
+        return restTemplate.postForObject(relayServerUrl + "/analyze/start", httpRequest, Boolean.class);
     }
     
 }
