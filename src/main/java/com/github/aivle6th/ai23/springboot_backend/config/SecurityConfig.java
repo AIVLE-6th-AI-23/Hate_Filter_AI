@@ -146,7 +146,7 @@ public class SecurityConfig{
         .logout(logout -> logout
             .logoutUrl("/api/user/logout") // 로그아웃 URL
             .invalidateHttpSession(true) // 세션 무효화
-            .deleteCookies("JSESSIONID") // 쿠키 삭제
+            .deleteCookies("JSESSIONID", "XSRF-TOKEN") // 쿠키 삭제
             .addLogoutHandler((request, response, authentication) -> {
                 if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
                     String username = ((UserDetails) authentication.getPrincipal()).getUsername();

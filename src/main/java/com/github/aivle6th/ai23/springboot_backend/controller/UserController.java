@@ -81,7 +81,7 @@ public class UserController {
                         .path("/")              // 루트 경로에서 유효
                         .secure(true)          // HTTPS 전용
                         .sameSite("None")      // Cross-Origin 요청 허용 (Azure 환경 대응)
-                        .httpOnly(true)        // JavaScript 접근 차단 (보안 강화)
+                        .httpOnly(false)        // JavaScript 접근 차단 (보안 강화)
                         .build();
                 response.addHeader("Set-Cookie", xsrfCookie.toString());
             }
