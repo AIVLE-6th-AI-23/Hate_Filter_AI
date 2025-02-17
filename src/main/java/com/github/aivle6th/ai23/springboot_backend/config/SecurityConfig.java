@@ -112,7 +112,7 @@ public class SecurityConfig{
     public SecurityFilterChain filterChain_production(HttpSecurity http) throws Exception {
         http
         .csrf(csrf -> csrf
-            .ignoringRequestMatchers("/api/*/posts/*/status*", "/api/*/content-analysis/notifications", "/api/*/content-analysis/create", "/api/user/login", "/api/user/signup", "/api/user/profile", "/api/user/verify", "/api/user/checkid/*", "/api/user/password/reset")    
+            .ignoringRequestMatchers("/api/*/posts/*/status*", "/api/*/content-analysis/notifications", "/api/*/content-analysis/create", "/api/user/login", "/api/user/signup", "/api/user/profile", "/api/user/verify", "/api/user/checkid/*", "/api/user/password/reset", "api/user/logout")    
             .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(auth -> auth
@@ -128,9 +128,6 @@ public class SecurityConfig{
 
             // 공개 경로 허용
             .requestMatchers("/api/user/login", "/api/user/signup", "/api/user/profile", "/api/user/verify", "/api/user/checkid/*", "/api/user/password/reset").permitAll()
-
-            // Swagger 경로
-            .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
 
             // 관리자 경로
             .requestMatchers("/admin/**").hasRole("ADMIN")
@@ -181,6 +178,7 @@ public class SecurityConfig{
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.addAllowedOrigin(FEServerUrl);
+        configuration.addAllowedOrigin(AIServerUrl);
         configuration.addAllowedMethod("*"); // 모든 HTTP 메서드 허용
         configuration.addAllowedHeader("*"); // 모든 헤더 허용
         configuration.setAllowCredentials(true); // 쿠키 전송 허용
