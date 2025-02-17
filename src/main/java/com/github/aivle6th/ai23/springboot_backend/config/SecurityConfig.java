@@ -113,9 +113,9 @@ public class SecurityConfig{
     @Profile("prod")
     public SecurityFilterChain filterChain_production(HttpSecurity http) throws Exception {
         http
-        .csrf(csrf -> csrf
-            .ignoringRequestMatchers("/api/*/posts/*/status*", "/api/*/content-analysis/notifications", "/api/*/content-analysis/create", "/api/user/login", "/api/user/signup", "/api/user/profile", "/api/user/verify", "/api/user/checkid/*", "/api/user/password/reset", "/api/user/logout")    
-            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
+        .csrf(csrf -> csrf.disable())
+            // .ignoringRequestMatchers("/api/*/posts/*/status*", "/api/*/content-analysis/notifications", "/api/*/content-analysis/create", "/api/user/login", "/api/user/signup", "/api/user/profile", "/api/user/verify", "/api/user/checkid/*", "/api/user/password/reset", "/api/user/logout")    
+            // .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse()))
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/*/posts/*/status/**", "/api/*/content-analysis/notifications", "/api/*/content-analysis/create").access((request, context) -> {
@@ -191,6 +191,15 @@ public class SecurityConfig{
         return source;
     }
 
+    @Bean
+    public CookieCsrfTokenRepository customCookieCsrfTokenRepository() {
+        CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        repository.setCookieName("XSRF-TOKEN");           // ✅ 쿠키 이름 지정
+        repository.setCookiePath("/");
+        
+        return repository;
+    }
+    
     @Bean
     public ForwardedHeaderFilter forwardedHeaderFilter() {
         return new ForwardedHeaderFilter();

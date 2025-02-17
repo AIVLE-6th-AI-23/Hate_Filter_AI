@@ -3,7 +3,6 @@ package com.github.aivle6th.ai23.springboot_backend.controller;
 import java.util.Set;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,7 +12,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
-import org.springframework.security.web.server.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -61,8 +59,7 @@ public class UserController {
     @Operation(summary = "사용자 로그인", description = "사용자의 로그인 요청을 처리합니다.")
     public ResponseEntity<ApiResponseDto<UserProfileResponseDto>> login(
         @Parameter(description = "로그인 요청 데이터", required = true) @RequestBody UserLoginRequestDto loginRequest,
-        HttpServletRequest request,
-        HttpServletResponse response
+        HttpServletRequest request
     ){
         try {
             UsernamePasswordAuthenticationToken authenticationToken =
@@ -74,17 +71,6 @@ public class UserController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             HttpSession session = request.getSession(true);
             session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
-            
-            CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
-            if (csrfToken != null) {
-                ResponseCookie xsrfCookie = ResponseCookie.from("XSRF-TOKEN", csrfToken.getToken())
-                        .path("/")              // 루트 경로에서 유효
-                        .secure(true)          // HTTPS 전용
-                        .sameSite("None")      // Cross-Origin 요청 허용 (Azure 환경 대응)
-                        .httpOnly(false)        // JavaScript 접근 차단 (보안 강화)
-                        .build();
-                response.addHeader("Set-Cookie", xsrfCookie.toString());
-            }
 
             // Profile 정보 조회
             String employeeId = ((UserDetails) authentication.getPrincipal()).getUsername();
