@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -132,6 +133,7 @@ public class PostController {
         } 
     }
 
+    @Async
     @Operation(summary = "게시물 상태 업데이트", description = "특정 게시물의 상태를 업데이트 합니다.")
     @PatchMapping("/{postId:\\d+}/status")
     public ResponseEntity<ApiResponseDto<Void>> updateStatus(

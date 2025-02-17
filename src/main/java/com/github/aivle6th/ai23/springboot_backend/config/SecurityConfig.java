@@ -20,6 +20,7 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.ForwardedHeaderFilter;
 
 import com.github.aivle6th.ai23.springboot_backend.service.CustomUserDetailsService;
 import com.github.aivle6th.ai23.springboot_backend.util.UserStatusManager;
@@ -185,4 +186,10 @@ public class SecurityConfig{
         source.registerCorsConfiguration("/**", configuration); // 모든 경로에 대해 CORS 적용
         return source;
     }
+
+    @Bean
+    public ForwardedHeaderFilter forwardedHeaderFilter() {
+        return new ForwardedHeaderFilter();
+    }
+
 }
