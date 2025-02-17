@@ -130,6 +130,9 @@ public class SecurityConfig{
             // 공개 경로 허용
             .requestMatchers("/api/user/login", "/api/user/signup", "/api/user/profile", "/api/user/verify", "/api/user/checkid/*", "/api/user/password/reset").permitAll()
 
+            // Swagger 경로
+            .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/api-docs/**").permitAll()
+
             // 관리자 경로
             .requestMatchers("/admin/**").hasRole("ADMIN")
 
