@@ -1,6 +1,3 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
 name: Build and deploy JAR app to Azure Web App - nero-backend
 
 on:
@@ -14,21 +11,53 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Java version
         uses: actions/setup-java@v1
         with:
+          distribution: 'temurin'
           java-version: '17'
 
-      - name: Build with Maven
-        run: mvn clean install
+      # ✅ application-dev.properties 파일 생성 (GitHub Secrets 사용)
+      - name: Create application-dev.properties
+        run: |
+          mkdir -p src/main/resources
+          echo "${{ secrets.APPLICATION_DEV }}" > src/main/resources/application-dev.properties
+          cat src/main/resources/application-dev.properties
 
+      # ✅ Gradle 캐싱 (속도 향상)
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # ✅ gradlew 실행 권한 부여
+      - name: Grant execute permissions to gradlew
+        run: chmod +x ./gradlew
+
+      # ✅ Gradle 빌드 (.jar 파일 생성)
+      - name: Build with Gradle
+        run: ./gradlew clean bootJar -x test
+
+      # 🚨 .jar 파일 존재 여부 확인 (디버깅용)
+      - name: Check JAR file existence
+        run: |
+          echo "Checking JAR files in build/libs"
+          ls -al ./build/libs || echo "No JAR file found"
+
+      # ✅ .jar 파일 업로드 (이름 반드시 java-app)
       - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: java-app
-          path: '${{ github.workspace }}/target/*.jar'
+          path: './build/libs/springboot-app.jar'
 
   deploy:
     runs-on: ubuntu-latest
@@ -38,16 +67,24 @@ jobs:
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
+      # ✅ 빌드된 JAR 파일 다운로드
       - name: Download artifact from build job
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: java-app
 
+      # 🚨 다운로드된 파일 확인 (디버깅용)
+      - name: Check downloaded files
+        run: |
+          echo "Checking downloaded files:"
+          ls -al
+
+      # ✅ Azure Web App에 특정 파일만 배포
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'nero-backend'
+          app-name: 'nero-backend'  # Azure Web App 이름
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7E3256F8197A45EFA791910492230C74 }}
-          package: '*.jar'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE }}
+          package: './springboot-app.jar'  # 특정 파일만 명시
