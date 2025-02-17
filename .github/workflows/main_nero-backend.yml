@@ -1,4 +1,7 @@
-name: Build and deploy WAR app to Azure Web App - nero-backend
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy JAR app to Azure Web App - nero-backend
 
 on:
   push:
@@ -16,41 +19,16 @@ jobs:
       - name: Set up Java version
         uses: actions/setup-java@v1
         with:
-          distribution: 'temurin'
           java-version: '17'
 
-      # 📌 gradlew 실행 권한 부여
-      - name: Grant execute permissions to gradlew
-        run: chmod +x ./gradlew
+      - name: Build with Maven
+        run: mvn clean install
 
-      # 📌 application-dev.properties 파일 생성
-      - name: Create application-dev.properties
-        run: |
-          mkdir -p src/main/resources
-          echo "${{ secrets.APPLICATION_DEV }}" > src/main/resources/application-dev.properties
-          cat src/main/resources/application-dev.properties
-
-      # ✅ Gradle 캐싱 (빌드 속도 향상)
-      - name: Cache Gradle packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
-      # ✅ Gradle 빌드 (WAR 파일 생성)
-      - name: Build with Gradle
-        run: ./gradlew clean build -x test
-
-      # ✅ .war 파일 업로드 (Azure 배포용)
       - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: java-app
-          path: './build/libs/*.war'
+          path: '${{ github.workspace }}/target/*.jar'
 
   deploy:
     runs-on: ubuntu-latest
@@ -61,7 +39,7 @@ jobs:
 
     steps:
       - name: Download artifact from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           name: java-app
 
@@ -71,5 +49,5 @@ jobs:
         with:
           app-name: 'nero-backend'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_365189217EF54DB98440B36B7C9D592F }}
-          package: '*.war'
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_7E3256F8197A45EFA791910492230C74 }}
+          package: '*.jar'
