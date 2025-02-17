@@ -20,7 +20,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # ✅ application-dev.properties 파일 생성 (GitHub Secrets 사용)
+      # ✅ application-dev.properties 파일 생성
       - name: Create application-dev.properties
         run: |
           mkdir -p src/main/resources
@@ -56,8 +56,8 @@ jobs:
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: java-app
-          path: './build/libs/springboot-app.jar'
+          name: java-app   # ✅ 반드시 download-artifact와 동일
+          path: './build/libs/springboot-app.jar'  # 명확한 경로 지정
 
   deploy:
     runs-on: ubuntu-latest
@@ -67,11 +67,11 @@ jobs:
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
 
     steps:
-      # ✅ 빌드된 JAR 파일 다운로드
+      # ✅ 빌드된 JAR 파일 다운로드 (이름 동일해야 함)
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: java-app
+          name: java-app  # ✅ 반드시 upload-artifact와 동일
 
       # 🚨 다운로드된 파일 확인 (디버깅용)
       - name: Check downloaded files
