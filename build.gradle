@@ -46,3 +46,13 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+tasks.named('bootJar') {
+    archiveBaseName = 'springboot-app'
+    archiveVersion = ''              
+}
+
+tasks.named('jar') {
+    enabled = false
+}
+
