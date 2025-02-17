@@ -20,12 +20,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # ✅ application-dev.properties 파일 생성
-      - name: Create application-dev.properties
+      # ✅ application-prod.properties 파일 생성
+      - name: Create application-prod.properties
         run: |
           mkdir -p src/main/resources
-          echo "${{ secrets.APPLICATION_DEV }}" > src/main/resources/application-dev.properties
-          cat src/main/resources/application-dev.properties
+          echo "${{ secrets.APPLICATION_PROD }}" > src/main/resources/application-prod.properties
+          cat src/main/resources/application-prod.properties
 
       # ✅ Gradle 캐싱 (속도 향상)
       - name: Cache Gradle packages
