@@ -19,6 +19,7 @@ jobs:
       - name: Set up Java version
         uses: actions/setup-java@v1
         with:
+          distribution: 'temurin'
           java-version: '17'
 
       # 📌 application-dev.properties 파일 생성
@@ -28,14 +29,27 @@ jobs:
           echo "${{ secrets.APPLICATION_DEV }}" > src/main/resources/application-dev.properties
           cat src/main/resources/application-dev.properties
 
-      - name: Build with Maven
-        run: mvn clean install
+      # ✅ Gradle 캐싱 (빌드 속도 향상)
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
+      # ✅ Gradle 빌드 (WAR 파일 생성)
+      - name: Build with Gradle
+        run: ./gradlew clean build -x test
+
+      # ✅ .war 파일 업로드 (Azure 배포용)
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: java-app
-          path: '${{ github.workspace }}/target/*.war'
+          path: './build/libs/*.war'
 
   deploy:
     runs-on: ubuntu-latest
