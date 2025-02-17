@@ -21,6 +21,13 @@ jobs:
         with:
           java-version: '17'
 
+      # 📌 application-dev.properties 파일 생성
+      - name: Create application-dev.properties
+        run: |
+          mkdir -p src/main/resources
+          echo "${{ secrets.APPLICATION_DEV }}" > src/main/resources/application-dev.properties
+          cat src/main/resources/application-dev.properties
+
       - name: Build with Maven
         run: mvn clean install
 
