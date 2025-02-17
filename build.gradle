@@ -46,3 +46,13 @@ dependencies {
 tasks.named('test') {
 	useJUnitPlatform()
 }
+
+tasks.named('bootJar') {
+    archiveBaseName = 'springboot-app'  // 실행 가능 JAR 이름
+    archiveVersion = ''                  // 버전 제거
+}
+
+tasks.named('jar') {
+    enabled = false                      // 일반 JAR 비활성화 (🚨 중복 방지)
+}
+
