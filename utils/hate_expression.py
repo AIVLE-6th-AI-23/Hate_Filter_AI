@@ -1,63 +1,68 @@
-from langdetect import detect
-import re
-from .type import AnalysisCategoryResultRequestDto
-from .constants import OPENAI_TEXT_ANALYSIS_PROMPT
-from .openai import load_openai_client
-from models import load_kr_model
-from typing import List
 import json
 import re
+from typing import List
+
+from langdetect import detect
+
+from models import load_kr_model
+
+from .constants import OPENAI_TEXT_ANALYSIS_PROMPT
+from .openai import load_openai_client
+from .type import AnalysisCategoryResultRequestDto
+
 
 def extract_json_array(text):
-    match = re.search(r'\[.*\]', text, re.DOTALL)
+    match = re.search(r"\[.*\]", text, re.DOTALL)
     if match:
         return match.group(0)
     return None
-        
-def detect_hate_expression(text : str) -> List[AnalysisCategoryResultRequestDto]:
+
+
+def detect_hate_expression(text: str) -> List[AnalysisCategoryResultRequestDto]:
     try:
-        sentences = re.split(r'(?<=[.!?。！？])\s+', text)
-        detection_results:List[AnalysisCategoryResultRequestDto] = []    
+        if not text.strip():
+            return []
+
+        sentences = re.split(r"(?<=[.!?。！？])\s+", text)
+        detection_results: List[AnalysisCategoryResultRequestDto] = []
         for txt in sentences:
             language = detect(txt)
             client = load_openai_client()
             if language == "ko":
-                print("start")
                 kr_classification = load_kr_model()
                 kr_result = kr_classification(txt)[0]
-                print(kr_result)
-                highest_score_result = max(kr_result, key=lambda x: x['score'])
-                isClean = highest_score_result['label'] == 'clean'
-                additional_info = f"""
+                highest_score_result = max(kr_result, key=lambda x: x["score"])
+                isClean = highest_score_result["label"] == "clean"
+                additional_info = (
+                    f"""
                             다음은 입력 텍스트를 한국어 혐오 표현 탐지 모델에 처리한 결과 입니다:
                             {kr_result}
                             이 결과를 참고하여 분석해주세요.
                             필수 : 최종 출력은 JSON 형식으로 출력해야합니다
-                            """ if not isClean else "필수 : 최종 출력은 JSON 형식으로 출력해야합니다"
-                
+                            """
+                    if not isClean
+                    else "필수 : 최종 출력은 JSON 형식으로 출력해야합니다"
+                )
+
                 response = client.chat.completions.create(
                     model="sonar",
                     messages=[
-                    {
-                        "role":"system",
-                        "content": OPENAI_TEXT_ANALYSIS_PROMPT    
-                    },
-                    {
-                        "role": "user",
-                        "content": f"""분석할 입력 텍스트:
+                        {"role": "system", "content": OPENAI_TEXT_ANALYSIS_PROMPT},
+                        {
+                            "role": "user",
+                            "content": f"""분석할 입력 텍스트:
                         {txt}
                         {additional_info}
-                        """
-                    }
-                    ]
+                        """,
+                        },
+                    ],
                 )
                 result = response.choices[0].message.content
                 json_array = extract_json_array(result)
                 if json_array is None:
                     return []
-                
+
                 parsed_result = json.loads(json_array)
-                print(parsed_result)
             else:
                 additional_info = f"""
                     다음은 입력 텍스트를 언어 감지 모델에 처리한 결과 입니다.
@@ -67,28 +72,26 @@ def detect_hate_expression(text : str) -> List[AnalysisCategoryResultRequestDto]
                 response = client.chat.completions.create(
                     model="sonar",
                     messages=[
-                    {
-                        "role":"system",
-                        "content": OPENAI_TEXT_ANALYSIS_PROMPT    
-                    },
-                    {
-                        "role": "user",
-                        "content": f"""분석할 입력 텍스트:
+                        {"role": "system", "content": OPENAI_TEXT_ANALYSIS_PROMPT},
+                        {
+                            "role": "user",
+                            "content": f"""분석할 입력 텍스트:
                         {txt}
-                        """
-                    }
-                    ]
+                        {additional_info}
+                        """,
+                        },
+                    ],
                 )
                 result = response.choices[0].message.content
                 json_array = extract_json_array(result)
                 if json_array is None:
                     return []
-                print(json_array)
                 parsed_result = json.loads(json_array)
-                print(parsed_result)
-        
-            detection_results += [AnalysisCategoryResultRequestDto(**item) for item in parsed_result]        
+
+            detection_results += [
+                AnalysisCategoryResultRequestDto(**item) for item in parsed_result
+            ]
         return detection_results
 
-    except Exception as e:
+    except Exception:
         raise

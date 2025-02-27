@@ -1,16 +1,33 @@
 import mimetypes
+
 import magic
+
 
 class UnsupportedFileTypeError(Exception):
     pass
 
+
 TEXT_MIME_TYPES = ["text/plain", "application/json", "application/xml"]
-IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/bmp", "image/webp", "image/tiff"]
-VIDEO_MIME_TYPES = ["video/mp4", "video/mpeg", "video/avi", "video/quicktime", "video/x-msvideo"]
+IMAGE_MIME_TYPES = [
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/bmp",
+    "image/webp",
+    "image/tiff",
+]
+VIDEO_MIME_TYPES = [
+    "video/mp4",
+    "video/mpeg",
+    "video/avi",
+    "video/quicktime",
+    "video/x-msvideo",
+]
+
 
 def get_mime_type(file_path: str) -> str:
     mime_type, _ = mimetypes.guess_type(file_path)
-    
+
     if not mime_type:
         mime = magic.Magic(mime=True)
         mime_type = mime.from_file(file_path)

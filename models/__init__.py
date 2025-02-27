@@ -1,3 +1,3 @@
-from .load_models import load_kr_model, load_gesture_model
+from .load_models import load_gesture_model, load_kr_model
 
-__all__ = ["load_kr_model", "load_gesture_model"]
+__all__ = ["load_gesture_model", "load_kr_model"]

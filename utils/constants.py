@@ -1,17 +1,59 @@
 import json
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
 
 load_dotenv(f".env.{os.getenv('ENV_VAR', 'dev')}")
 
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-BASE_API_URL = os.getenv('BASE_API_URL')
-SERVER_API_KEY = os.getenv('SERVER_API_KEY')
-SAVE_DIRECTORY = "./downloads"
+
+def _required_env(name: str) -> str:
+    value = os.getenv(name, "").strip()
+    if not value:
+        raise RuntimeError(f"Required environment variable is missing: {name}")
+    return value
+
+
+def _positive_int_env(name: str, default: int) -> int:
+    value = int(os.getenv(name, str(default)))
+    if value <= 0:
+        raise RuntimeError(f"{name} must be greater than zero")
+    return value
+
+
+def _positive_float_env(name: str, default: float) -> float:
+    value = float(os.getenv(name, str(default)))
+    if value <= 0:
+        raise RuntimeError(f"{name} must be greater than zero")
+    return value
+
+
+OPENAI_API_KEY = _required_env("OPENAI_API_KEY")
+BASE_API_URL = _required_env("BASE_API_URL").rstrip("/")
+RELAY_SERVER_URL = _required_env("RELAY_SERVER_URL").rstrip("/")
+SERVER_API_KEY = _required_env("SERVER_API_KEY")
+
+ALLOWED_DOWNLOAD_HOSTS = frozenset(
+    host.strip().lower()
+    for host in _required_env("ALLOWED_DOWNLOAD_HOSTS").split(",")
+    if host.strip()
+)
+if not ALLOWED_DOWNLOAD_HOSTS:
+    raise RuntimeError("ALLOWED_DOWNLOAD_HOSTS must contain at least one host")
+
+SAVE_DIRECTORY = os.getenv("SAVE_DIRECTORY", "/tmp/hate-filter-ai/downloads")
+MAX_DOWNLOAD_BYTES = _positive_int_env("MAX_DOWNLOAD_BYTES", 100 * 1024 * 1024)
+MAX_UPLOAD_BYTES = _positive_int_env("MAX_UPLOAD_BYTES", 100 * 1024 * 1024)
+REQUEST_DEDUP_CACHE_SIZE = _positive_int_env("REQUEST_DEDUP_CACHE_SIZE", 10_000)
+HTTP_TIMEOUT_SECONDS = _positive_float_env("HTTP_TIMEOUT_SECONDS", 15.0)
+HTTP_MAX_RETRIES = _positive_int_env("HTTP_MAX_RETRIES", 3)
+HTTP_RETRY_BASE_DELAY_SECONDS = _positive_float_env(
+    "HTTP_RETRY_BASE_DELAY_SECONDS",
+    1.0,
+)
 
 CATEGORYOPTION = {
-    "curse" : "욕설",
-    "degrading" : "모욕/비하",
+    "curse": "욕설",
+    "degrading": "모욕/비하",
     "regional": "지역 차별",
     "racial": "인종 차별",
     "religious": "종교 차별",
@@ -81,16 +123,27 @@ OPENAI_TEXT_ANALYSIS_PROMPT = f"""당신은 혐오 표현 분석을 수행하는
                 """
 
 FRAME_THRESHOLD = 30
-DETECTABLE_HATE_GESTURES = ["dislike", "like", "middle_finger", "ok", "palm", "peace_inverted", "rock", "point", "thumb_index", "thumb_index2"]
+DETECTABLE_HATE_GESTURES = [
+    "dislike",
+    "like",
+    "middle_finger",
+    "ok",
+    "palm",
+    "peace_inverted",
+    "rock",
+    "point",
+    "thumb_index",
+    "thumb_index2",
+]
 GESTURE_TO_ISO = {
-  "ok": ["840", "682", "792", "76", "250", "56"],
-  "peace_inverted": ["826", "36", "554"],
-  "like": ["36", "300", "792", "764", "682"],
-  "middle_finger": ["840", "826", "978", "392", '410', '682'],
-  "thumb_index": ["682", "784", "780"],
-  "thumb_index2": ["682", "784", "780"],
-  "dislike": ["840", "682", '364', "368", "4"],
-  "palm": ["300", "792"],
-  "rock": ["380", "724", "620"],
-  "point": ["156", "392", "410", "484", "608"]
+    "ok": ["840", "682", "792", "76", "250", "56"],
+    "peace_inverted": ["826", "36", "554"],
+    "like": ["36", "300", "792", "764", "682"],
+    "middle_finger": ["840", "826", "978", "392", "410", "682"],
+    "thumb_index": ["682", "784", "780"],
+    "thumb_index2": ["682", "784", "780"],
+    "dislike": ["840", "682", "364", "368", "4"],
+    "palm": ["300", "792"],
+    "rock": ["380", "724", "620"],
+    "point": ["156", "392", "410", "484", "608"],
 }
