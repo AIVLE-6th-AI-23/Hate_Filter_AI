@@ -73,10 +73,9 @@ yolov10/
 kr_text_detector/
 
 fastapi-env/
-fastapi-env\
 __pycache__/
 *.pyc
 *.pyo
 .env
-
-
+.env.*
+!.env.example

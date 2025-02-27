@@ -1,5 +1,8 @@
-fastapi
-uvicorn
+fastapi>=0.100,<1
+uvicorn>=0.22,<1
+gunicorn>=22,<24
+pydantic>=2,<3
+python-multipart>=0.0.9,<1
 opencv-python-headless==4.9.0.80
 ultralytics
 easyocr
@@ -15,13 +18,11 @@ scipy==1.13.0
 onnxslim==0.1.31
 onnxruntime-gpu==1.18.0
 gradio==4.31.5
-opencv-python==4.9.0.80
 psutil==5.9.8
 py-cpuinfo==9.0.0
 huggingface-hub==0.23.2
 safetensors==0.4.3
-datetime
-httpx
+httpx>=0.24,<1
 openai
-python-dotenv
-python-magic
+python-dotenv>=1,<2
+python-magic>=0.4,<1
