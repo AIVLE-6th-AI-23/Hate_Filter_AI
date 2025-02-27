@@ -90,4 +90,4 @@ jobs:
         with:
           app-name: 'python-fastapi'
           slot-name: 'Production'
-          startup-command: 'gunicorn --bind=0.0.0.0 --timeout 600 --workers 4 --worker-class uvicorn.workers.UvicornWorker main:app'
+          startup-command: 'gunicorn --bind=0.0.0.0 --timeout 600 --workers 1 --worker-class uvicorn.workers.UvicornWorker main:app'
