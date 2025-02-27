@@ -1,47 +1,70 @@
-import httpx
-from .constants import BASE_API_URL
-from .type import AnalysisCategoryResultRequestDto, ContentAnalysisRequestDto
 from typing import List
-from .constants import SERVER_API_KEY
-import asyncio
 
-headers = {"X-API-KEY": SERVER_API_KEY} 
+from .constants import BASE_API_URL, RELAY_SERVER_URL, SERVER_API_KEY
+from .http_client import request_with_retry
+from .type import AnalysisCategoryResultRequestDto, ContentAnalysisRequestDto
 
-async def update_spring_status(board_id: int, post_id: int, status: str, progress: int):
-    async with httpx.AsyncClient() as client:
-        try:
-            url = f"{BASE_API_URL}/api/{board_id}/posts/{post_id}/status"
-            await client.patch(url, headers=headers, params=f"{status}~{progress}")
-        except Exception as e:
-            print(f"상태 업데이트 실패: {e}")
+HEADERS = {"X-API-KEY": SERVER_API_KEY}
 
-async def exit_status(board_id: int, post_id: int, employee_id: str, result: List[AnalysisCategoryResultRequestDto], result_summary: ContentAnalysisRequestDto):
-    async with httpx.AsyncClient() as client:
-        try:
-            analysis_url = f"{BASE_API_URL}/api/{post_id}/content-analysis/create"
-            analysis_payload = {
-                "contentAnalysisRequestDto": result_summary.model_dump(),
-                "analysisCategoryResultRequestDto": [r.model_dump() for r in result]  
-            }
-            response_analysis = await client.post(analysis_url, json=analysis_payload, headers=headers)
-            await asyncio.sleep(1)
-            
-            url = f"{BASE_API_URL}/api/{board_id}/posts/{post_id}/status"
-            response_exit = await client.patch(url, headers=headers, params=None)
-            
-            notification_url = f"{BASE_API_URL}/api/{post_id}/content-analysis/notifications"
-            notification_payload = {
-                "employeeId": employee_id,
-                "postId" : post_id,
-                "boardId" : board_id,
-                "resultSummary": result_summary.analysisDetail
-            }
-            response_noti = await client.post(notification_url, json=notification_payload, headers=headers)
-            if response_analysis.status_code == 200 and response_exit.status_code == 200 and response_noti.status_code == 200:
-                print("종료 처리 및 알림 전송 성공")
-            else :
-                await update_spring_status(board_id, post_id, "Failed : 종료처리 및 알림 전송 실패", 0)
-                print(f"{response_analysis.status_code} 종료 처리 {response_exit.status_code} 및 알림 전송 실패 {response_noti.status_code}")
-        except Exception as e:
-            await update_spring_status(board_id, post_id, "Failed : 종료처리 및 알림 전송 실패", 0)
-            print(f"상태 업데이트 실패: {e}")
+
+async def update_spring_status(
+    board_id: int,
+    post_id: int,
+    status: str,
+    progress: int,
+) -> None:
+    await request_with_retry(
+        "PATCH",
+        f"{BASE_API_URL}/api/{board_id}/posts/{post_id}/status",
+        headers=HEADERS,
+        params={"status": status, "progress": progress},
+    )
+
+
+async def exit_status(
+    board_id: int,
+    post_id: int,
+    employee_id: str,
+    result: List[AnalysisCategoryResultRequestDto],
+    result_summary: ContentAnalysisRequestDto,
+) -> None:
+    analysis_payload = {
+        "contentAnalysisRequestDto": result_summary.model_dump(),
+        "analysisCategoryResultRequestDto": [item.model_dump() for item in result],
+    }
+    await request_with_retry(
+        "POST",
+        f"{BASE_API_URL}/api/{post_id}/content-analysis/create",
+        headers=HEADERS,
+        json=analysis_payload,
+        retry=False,
+    )
+
+    await update_spring_status(board_id, post_id, "COMPLETED", 100)
+
+    notification_payload = {
+        "employeeId": employee_id,
+        "postId": post_id,
+        "boardId": board_id,
+        "resultSummary": result_summary.analysisDetail,
+    }
+    await request_with_retry(
+        "POST",
+        f"{BASE_API_URL}/api/{post_id}/content-analysis/notifications",
+        headers=HEADERS,
+        json=notification_payload,
+        retry=False,
+    )
+
+
+async def notify_relay_ready(request_id: str, board_id: int, post_id: int) -> None:
+    await request_with_retry(
+        "POST",
+        f"{RELAY_SERVER_URL}/status/ok",
+        headers=HEADERS,
+        json={
+            "requestId": request_id,
+            "boardId": board_id,
+            "postId": post_id,
+        },
+    )

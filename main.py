@@ -1,156 +1,296 @@
-from fastapi import FastAPI, UploadFile, File, BackgroundTasks, HTTPException
-from utils.status import update_spring_status, exit_status
-from utils.hate_gesture import detect_gestures
-from utils.hate_expression import detect_hate_expression
-from utils.hate_videoframes import detect_hate_videoframes
-from utils.file_download import download_file_from_url
-from utils.mime_detector import categorize_file, UnsupportedFileTypeError
-from utils.type import AnalysisCategoryResultRequestDto, ContentAnalysisRequestDto
-from typing import List
-from services.text_analysis import analyzeText
-from services.image_analysis import analyzeImage
-from services.video_analysis import analyzeVideo
-from pydantic import BaseModel
-import numpy as np
+import asyncio
+import logging
 import os
-import cv2
+import tempfile
+from collections import OrderedDict
+from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import List
 
-app = FastAPI()
+from fastapi import (
+    BackgroundTasks,
+    Depends,
+    FastAPI,
+    File,
+    HTTPException,
+    UploadFile,
+    status,
+)
+from pydantic import BaseModel, Field
 
-@app.get("/test")
-async def test_connection():
-    return {"status": "success", "message": "FastAPI 서버 정상 작동"}
+from utils.constants import MAX_UPLOAD_BYTES, REQUEST_DEDUP_CACHE_SIZE
+from utils.file_download import download_file_from_url
+from utils.http_client import close_http_client
+from utils.security import require_api_key
+from utils.status import exit_status, notify_relay_ready, update_spring_status
+from utils.type import (
+    AnalysisCategoryResultRequestDto,
+    AnalysisStartRequestDTO,
+    ContentAnalysisRequestDto,
+)
 
-class AnalysisStartRequestDTO(BaseModel):
-    employeeId: str
-    postId: int
-    boardId: int
-    thumbnail: str
+logger = logging.getLogger(__name__)
 
-@app.post("/analyze/start")
-async def start(request: AnalysisStartRequestDTO, background_tasks: BackgroundTasks):
+_accepted_request_ids = OrderedDict()
+_accepted_request_ids_lock = asyncio.Lock()
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
     try:
-        print(f"analysis start with request {request}")
-        background_tasks.add_task(analyze, request)
-        await update_spring_status(request.boardId, request.postId, "Start Analysis", 0)
-        return True
-    except Exception:
-        await update_spring_status(request.boardId, request.postId, "FAILED", 0)
-        return False    
-        
-options = {
-    "text" : analyzeText,
-    "image" : analyzeImage,
-    "video" : analyzeVideo,
-}
-        
-async def analyze(request: AnalysisStartRequestDTO):        
-    try:
-        await update_spring_status(request.boardId, request.postId, "Start Analysis", 0)
-        
-        # Download file
-        file_path = await download_file_from_url(request.thumbnail)
-        
-        # Content Type 판단
-        file_type = categorize_file(file_path)
-        
-        # text, image, video 별 분석 실행
-        result = await options[file_type](file_path, request.boardId, request.postId)
-        
-        
-        if not result:
-            analysisSummary = """
-                    ✅ 분석 결과 해당 콘텐츠에서 혐오 표현이 감지되지 않았습니다.  
-                    해당 콘텐츠는 AI 기반 혐오 표현 분석 시스템을 통해 검토되었으며,  
-                    명백한 혐오 표현이나 공격적인 언어가 포함되지 않은 것으로 분석되었습니다.    
-
-                    콘텐츠 정책 및 내부 검수 기준에 따라 추가적인 확인이 필요할 수 있습니다.
-                    """
-        else :
-            category_counts = {}  # 카테고리별 개수 저장
-            for detection in result:
-                category = detection.categoryName
-                category_counts[category] = category_counts.get(category, 0) + 1
-
-            detected_summary = ", ".join(f"{count}건의 {category}" for category, count in category_counts.items())
-
-            analysisSummary = f"""
-                    ⚠️ 분석 결과 해당 콘텐츠에서 총 {len(result)}건의 혐오 표현이 감지되었습니다.
-                    감지된 혐오 표현 유형
-                        {detected_summary}
-                    
-                    본 분석 결과는 AI 기반 혐오 표현 탐지 시스템을 통해 자동으로 산출된 것으로 
-                    콘텐츠 정책 및 내부 검수 기준에 따라 추가적인 확인이 필요할 수 있습니다. 
-                    """
-        result_summary = ContentAnalysisRequestDto(contentType=file_type, analysisDetail=analysisSummary)
-        
-        
-        # 분석 결과 처리 및 Spring boot 서버로 전송 & 알림 전송 후 종료
-        await exit_status(request.boardId, request.postId, request.employeeId, result, result_summary)         
-    except UnsupportedFileTypeError as e :
-        await update_spring_status(request.boardId, request.postId, "FAILED", 0)
-        print(f"지원되지 않는 파일 유형: {e}")
-    except FileNotFoundError as e :
-        await update_spring_status(request.boardId, request.postId, "FAILED", 0)
-        print("파일을 찾을 수 없습니다.")
-    except Exception as e:
-        await update_spring_status(request.boardId, request.postId, "FAILED", 0)
-        print(f"Unknown Error : {e}")
+        yield
     finally:
-        os.remove(file_path)    
+        await close_http_client()
+
+
+app = FastAPI(title="Hate Filter AI Server", lifespan=lifespan)
+
+
+@app.get("/health", tags=["Health"])
+async def health():
+    return {"status": "ok"}
+
+
+@app.post(
+    "/analyze/start",
+    response_model=bool,
+    status_code=status.HTTP_202_ACCEPTED,
+    dependencies=[Depends(require_api_key)],
+)
+async def start(
+    request: AnalysisStartRequestDTO,
+    background_tasks: BackgroundTasks,
+) -> bool:
+    request_id = str(request.requestId)
+    async with _accepted_request_ids_lock:
+        if request_id in _accepted_request_ids:
+            logger.info("Duplicate analysis request ignored: request_id=%s", request_id)
+            return True
+
+        _accepted_request_ids[request_id] = None
+        if len(_accepted_request_ids) > REQUEST_DEDUP_CACHE_SIZE:
+            _accepted_request_ids.popitem(last=False)
+
+    background_tasks.add_task(analyze, request)
+    logger.info("Analysis request accepted: request_id=%s", request.requestId)
+    return True
+
+
+async def analyze(request: AnalysisStartRequestDTO) -> None:
+    file_path = None
+
+    try:
+        await update_spring_status(
+            request.boardId,
+            request.postId,
+            "Start Analysis",
+            0,
+        )
+        file_path = await download_file_from_url(str(request.thumbnail))
+        file_type = categorize_content_file(file_path)
+        result = await run_content_analysis(
+            file_type,
+            file_path,
+            request.boardId,
+            request.postId,
+        )
+        result_summary = ContentAnalysisRequestDto(
+            contentType=file_type,
+            analysisDetail=build_analysis_summary(result),
+        )
+        await exit_status(
+            request.boardId,
+            request.postId,
+            request.employeeId,
+            result,
+            result_summary,
+        )
+    except Exception:
+        logger.exception("Analysis failed: request_id=%s", request.requestId)
+        try:
+            await update_spring_status(
+                request.boardId,
+                request.postId,
+                "FAILED: AI analysis failed",
+                0,
+            )
+        except Exception:
+            logger.exception(
+                "Failed to report analysis failure to Spring: request_id=%s",
+                request.requestId,
+            )
+    finally:
+        if file_path is not None:
+            try:
+                os.remove(file_path)
+            except FileNotFoundError:
+                pass
+            except OSError:
+                logger.exception(
+                    "Failed to remove downloaded file: request_id=%s",
+                    request.requestId,
+                )
+
+        try:
+            await notify_relay_ready(
+                str(request.requestId),
+                request.boardId,
+                request.postId,
+            )
+        except Exception:
+            logger.exception(
+                "Failed to notify Relay that analysis finished: request_id=%s",
+                request.requestId,
+            )
+
+
+def categorize_content_file(file_path: str) -> str:
+    from utils.mime_detector import categorize_file
+
+    return categorize_file(file_path)
+
+
+async def run_content_analysis(
+    file_type: str,
+    file_path: str,
+    board_id: int,
+    post_id: int,
+):
+    if file_type == "text":
+        from services.text_analysis import analyzeText
+
+        return await analyzeText(file_path, board_id, post_id)
+    if file_type == "image":
+        from services.image_analysis import analyzeImage
+
+        return await analyzeImage(file_path, board_id, post_id)
+    if file_type == "video":
+        from services.video_analysis import analyzeVideo
+
+        return await analyzeVideo(file_path, board_id, post_id)
+    raise ValueError(f"Unsupported analysis type: {file_type}")
+
+
+def build_analysis_summary(result: List[AnalysisCategoryResultRequestDto]) -> str:
+    if not result:
+        return (
+            "분석 결과 해당 콘텐츠에서 혐오 표현이 감지되지 않았습니다. "
+            "AI 기반 자동 분석 결과이므로 콘텐츠 정책 및 내부 검수 기준에 따라 "
+            "추가 확인이 필요할 수 있습니다."
+        )
+
+    category_counts = {}
+    for detection in result:
+        category = detection.categoryName
+        category_counts[category] = category_counts.get(category, 0) + 1
+
+    detected_summary = ", ".join(
+        f"{count}건의 {category}" for category, count in category_counts.items()
+    )
+    return (
+        f"분석 결과 해당 콘텐츠에서 총 {len(result)}건의 혐오 표현이 감지되었습니다. "
+        f"감지 유형: {detected_summary}. "
+        "AI 기반 자동 분석 결과이므로 콘텐츠 정책 및 내부 검수 기준에 따라 "
+        "추가 확인이 필요할 수 있습니다."
+    )
+
 
 class AnalysisRequest(BaseModel):
-    text: str
+    text: str = Field(min_length=1, max_length=50_000)
+
 
 class AnalysisResponse(BaseModel):
     result: List[AnalysisCategoryResultRequestDto]
-    
-@app.post("/detect/text", response_model=AnalysisResponse)
-def detect_text(request: AnalysisRequest):
-    try:
-        result = detect_hate_expression(request.text)
-        return AnalysisResponse(result=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/detect/image", response_model=AnalysisResponse)
-def detect_image(file: UploadFile = File(...)):
-    try:
-        image = np.frombuffer(file.file.read(), np.uint8)
-        image = cv2.imdecode(image, cv2.IMREAD_COLOR)
-        result = detect_gestures(image)
-        return AnalysisResponse(result=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/detect/video", response_model=AnalysisResponse)
+@app.post(
+    "/detect/text",
+    response_model=AnalysisResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def detect_text(request: AnalysisRequest):
+    from utils.hate_expression import detect_hate_expression
+
+    try:
+        result = await asyncio.to_thread(detect_hate_expression, request.text)
+        return AnalysisResponse(result=result)
+    except Exception as exc:
+        logger.exception("Direct text analysis failed")
+        raise HTTPException(status_code=500, detail="Text analysis failed") from exc
+
+
+@app.post(
+    "/detect/image",
+    response_model=AnalysisResponse,
+    dependencies=[Depends(require_api_key)],
+)
+async def detect_image(file: UploadFile = File(...)):
+    import cv2
+    import numpy as np
+
+    from utils.hate_gesture import detect_gestures
+
+    image_bytes = await read_limited_upload(file)
+    image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)
+    if image is None:
+        raise HTTPException(status_code=400, detail="Invalid image file")
+
+    try:
+        result = await asyncio.to_thread(detect_gestures, image)
+        return AnalysisResponse(result=result)
+    except Exception as exc:
+        logger.exception("Direct image analysis failed")
+        raise HTTPException(status_code=500, detail="Image analysis failed") from exc
+
+
+@app.post(
+    "/detect/video",
+    response_model=AnalysisResponse,
+    dependencies=[Depends(require_api_key)],
+)
 async def detect_video(file: UploadFile = File(...)):
+    import cv2
+
+    from utils.hate_videoframes import detect_hate_videoframes
+
+    video_bytes = await read_limited_upload(file)
+    temporary_path = None
+    capture = None
+
     try:
-        video_bytes = await file.read()
-        temp_video_path = "temp_video.mp4"
-        with open(temp_video_path, "wb") as temp_video:
-            temp_video.write(video_bytes)
-        
-        cap = cv2.VideoCapture(temp_video_path)
-        if not cap.isOpened():
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temporary:
+            temporary.write(video_bytes)
+            temporary_path = temporary.name
+
+        capture = cv2.VideoCapture(temporary_path)
+        if not capture.isOpened():
             raise HTTPException(status_code=400, detail="Invalid video file")
-        
-        result = await detect_hate_videoframes(0,0,cap,False)
-        os.remove(temp_video_path)
+
+        result = await detect_hate_videoframes(0, 0, capture, False)
         return AnalysisResponse(result=result)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@app.post("/test/api/status")
-async def testApi(boardId: int, postId: int,status:str ,progress:int):
-    try:
-        await update_spring_status(boardId,postId,status,progress)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
-@app.post("/test/api/status/exit")
-async def testApiexit(boardId: int, postId: int,employeeId: str):
-    try:
-        await exit_status(boardId,postId, employeeId, [], ContentAnalysisRequestDto(contentType="unknown", analysisDetail="empty"))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Direct video analysis failed")
+        raise HTTPException(status_code=500, detail="Video analysis failed") from exc
+    finally:
+        if capture is not None:
+            capture.release()
+        if temporary_path is not None:
+            Path(temporary_path).unlink(missing_ok=True)
+
+
+async def read_limited_upload(file: UploadFile) -> bytes:
+    chunks = []
+    total_bytes = 0
+
+    while chunk := await file.read(1024 * 1024):
+        total_bytes += len(chunk)
+        if total_bytes > MAX_UPLOAD_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                detail="Upload exceeds the configured size limit",
+            )
+        chunks.append(chunk)
+
+    return b"".join(chunks)
